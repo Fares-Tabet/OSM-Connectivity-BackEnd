@@ -84,7 +84,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 {
                     firstJunction = junctionNodeDictionary[startNode.Id];
                     firstJunction.roadTypes.Add(way.roadClass);
-                    firstJunction.wayToNodeMap.Add(way.Id, endNode.Id);
+                    firstJunction.wayToNodeMap[way.Id] = endNode.Id; 
                     junctionNodeDictionary[startNode.Id] = firstJunction;
                 }
                 else
@@ -98,7 +98,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 {
                     lastJunction = junctionNodeDictionary[endNode.Id];
                     lastJunction.roadTypes.Add(way.roadClass);
-                    lastJunction.wayToNodeMap.Add(way.Id, endNode.Id);
+                    lastJunction.wayToNodeMap[way.Id] = startNode.Id;   
                     junctionNodeDictionary[endNode.Id] = lastJunction;
                 }
                 else

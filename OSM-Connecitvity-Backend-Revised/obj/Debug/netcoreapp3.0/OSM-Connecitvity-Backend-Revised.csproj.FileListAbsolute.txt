@@ -11,3 +11,16 @@ C:\Users\Fares\source\repos\OSM-Connecitvity-Backend-Revised\OSM-Connecitvity-Ba
 C:\Users\Fares\source\repos\OSM-Connecitvity-Backend-Revised\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.pdb
 C:\Users\Fares\source\repos\OSM-Connecitvity-Backend-Revised\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\Newtonsoft.Json.dll
 C:\Users\Fares\source\repos\OSM-Connecitvity-Backend-Revised\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.csproj.CopyComplete
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.exe
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.deps.json
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.runtimeconfig.json
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.runtimeconfig.dev.json
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.dll
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.pdb
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\bin\Debug\netcoreapp3.0\Newtonsoft.Json.dll
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.csprojAssemblyReference.cache
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.AssemblyInfoInputs.cache
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.AssemblyInfo.cs
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.csproj.CopyComplete
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.dll
+C:\Users\Fares\Documents\GitHub\OSM-Connectivity-BackEnd\OSM-Connecitvity-Backend-Revised\obj\Debug\netcoreapp3.0\OSM-Connecitvity-Backend-Revised.pdb

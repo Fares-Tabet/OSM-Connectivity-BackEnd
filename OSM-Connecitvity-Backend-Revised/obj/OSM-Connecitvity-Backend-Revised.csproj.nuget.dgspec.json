@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {}
+    "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {
+    "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
+        "projectUniqueName": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
         "projectName": "OSM-Connecitvity-Backend-Revised",
-        "projectPath": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
+        "projectPath": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
         "packagesPath": "C:\\Users\\Fares\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\obj\\",
+        "outputPath": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Fares\\AppData\\Roaming\\NuGet\\NuGet.Config",
