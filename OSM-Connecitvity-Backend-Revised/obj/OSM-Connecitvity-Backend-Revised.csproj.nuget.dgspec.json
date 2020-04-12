@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
+        "projectName": "OSM-Connecitvity-Backend-Revised",
+        "projectPath": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
+        "packagesPath": "C:\\Users\\Fares\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Fares\\source\\repos\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\Fares\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "netcoreapp3.0"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "netcoreapp3.0": {
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "netcoreapp3.0": {
+          "dependencies": {
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[12.0.3, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.0.100\\RuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
