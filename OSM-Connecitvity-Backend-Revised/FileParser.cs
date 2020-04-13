@@ -114,10 +114,10 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             // Create the way data file
-            File.WriteAllText(@"~\..\..\..\..\DataFiles\ways.json", JsonConvert.SerializeObject(wayDictionary));
+            File.WriteAllText("ways.json", JsonConvert.SerializeObject(wayDictionary));
 
             // Create the junctionNodes data file
-            File.WriteAllText(@"~\..\..\..\..\DataFiles\junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
+            File.WriteAllText("junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
 
         }
 
@@ -133,7 +133,7 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             // Create the node data file
-            File.WriteAllText(@"~\..\..\..\..\DataFiles\NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
+            File.WriteAllText("NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
         }
     }
 }
