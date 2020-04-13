@@ -29,3 +29,14 @@ OSM-Connecitvity-Backend-Revised/obj/OSM-Connecitvity-Backend-Revised.csproj.nug
 OSM-Connecitvity-Backend-Revised/obj/OSM-Connecitvity-Backend-Revised.csproj.nuget.dgspec.json
 OSM-Connecitvity-Backend-Revised/obj/OSM-Connecitvity-Backend-Revised.csproj.nuget.g.props
 OSM-Connecitvity-Backend-Revised/obj/project.assets.json
+OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.dll
+OSM-Connecitvity-Backend-Revised/bin/Debug/netcoreapp3.0/Disconnections.json
+OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.assets.cache
+*.json
+*.dll
+*.pdb
+*.json
+*.cache
+*.pdb
+*.props
+*.json
