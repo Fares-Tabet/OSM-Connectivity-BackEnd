@@ -57,7 +57,7 @@ namespace OSM_Connecitvity_Backend_Revised
         public void generateDisconnectionsDataBFS(string fileName)
         {
             List<JunctionNode> disconnectionNodes = new List<JunctionNode>();
-
+            Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
 
@@ -82,6 +82,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
 
                     currentLabel++;
+                    checker.Add(currentLabel, new HashSet<int>());
                     children = new Queue();
 
                     //initialize the parent with the current label
@@ -111,11 +112,15 @@ namespace OSM_Connecitvity_Backend_Revised
                                     //if the node is already labeled
                                     if(label != 0)
                                     {
-                                        //append the entire subtree of that label to that of the currentlabel
+                                        //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
+                                        foreach (JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
+                                        {
+                                            junctionNode.label = currentLabel;
+                                        }
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
-
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
+                                        checker.GetValueOrDefault(label).Add(currentLabel);
                                     }
                                     //else it means that this node is unlabeled and add it to the children queue
                                     else
@@ -123,6 +128,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label = currentLabel;
                                         children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
                                         subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
+
                                     }
                                     
                                 }
@@ -135,7 +141,11 @@ namespace OSM_Connecitvity_Backend_Revised
                                     //if the node is already labeled
                                     if (label != 0)
                                     {
-                                        //append the entire subtree of that label to that of the currentlabel
+                                        //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
+                                        foreach(JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
+                                        {
+                                            junctionNode.label = currentLabel;
+                                        }
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
@@ -146,13 +156,14 @@ namespace OSM_Connecitvity_Backend_Revised
                                         JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label = currentLabel;
                                         children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
                                         subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
+
                                     }
                                 }
                             }
                         }   
                     }
                     //add the subtree to the dictionary
-                    LabelToSubtrees.Add(currentLabel,subtree);
+                    LabelToSubtrees.Add(currentLabel, subtree);
                 }
             }
 
@@ -161,9 +172,9 @@ namespace OSM_Connecitvity_Backend_Revised
             {
                 LabelToSubtrees.Remove(label);
             }
-
+           
             //write it to the file
-            File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(LabelToSubtrees));
         }
 
         public void generateRoadNetwork(List<string> roadTypes,string fileName)
