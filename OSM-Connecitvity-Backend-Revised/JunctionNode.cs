@@ -14,7 +14,7 @@ namespace OSM_Connecitvity_Backend_Revised
         public Dictionary<string,string> wayToNodeMap { get; set; }
 
         public List<string> roadTypes { get; set; }
-
+        public int label = 0;
         public JunctionNode(string id, Dictionary<string,string> wayToNodeMap, List<string> roadTypes, float Lat, float Lng)
         {
             this.Id = id;

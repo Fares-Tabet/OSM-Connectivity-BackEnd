@@ -1,27 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {}
+    "/Users/birvapatel/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/OSM-Connecitvity-Backend-Revised.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj": {
+    "/Users/birvapatel/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/OSM-Connecitvity-Backend-Revised.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
+        "projectUniqueName": "/Users/birvapatel/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/OSM-Connecitvity-Backend-Revised.csproj",
         "projectName": "OSM-Connecitvity-Backend-Revised",
-        "projectPath": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\OSM-Connecitvity-Backend-Revised.csproj",
-        "packagesPath": "C:\\Users\\Fares\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Fares\\Documents\\GitHub\\OSM-Connectivity-BackEnd\\OSM-Connecitvity-Backend-Revised\\obj\\",
+        "projectPath": "/Users/birvapatel/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/OSM-Connecitvity-Backend-Revised.csproj",
+        "packagesPath": "/Users/birvapatel/.nuget/packages/",
+        "outputPath": "/Users/birvapatel/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Fares\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/birvapatel/.config/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp3.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -58,7 +56,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.0.100\\RuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/3.1.200/RuntimeIdentifierGraph.json"
         }
       }
     }

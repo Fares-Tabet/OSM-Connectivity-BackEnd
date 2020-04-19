@@ -10,12 +10,14 @@ namespace OSM_Connecitvity_Backend_Revised
         public string Id { get; set; }
         public float Lat { get; set; }
         public float Lng { get; set; }
+        public List<string> ways { get; set; }
 
         public Node(string id, float lat, float lon)
         {
             this.Id = id;
             this.Lat = lat;
             this.Lng = lon;
+            this.ways = new List<string>();
         }
 
 

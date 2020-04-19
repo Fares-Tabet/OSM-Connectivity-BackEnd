@@ -11,21 +11,23 @@ namespace OSM_Connecitvity_Backend_Revised
 {
     public class FileProcessor
     {
-        Dictionary<string, string> NodeDictionary;
+        Dictionary<string, Node> NodeDictionary;
         Dictionary<string, Way> WayHashMap;
         Dictionary<string, JunctionNode> JunctionNodeHashMap;
 
         public FileProcessor()
         {
-            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string,string>>(File.ReadAllText(@"NodeDictionary.json"));
+            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string,Node>>(File.ReadAllText(@"NodeDictionary.json"));
             WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
             JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
         }
 
+        //finding disconnections
         public void generateDisconnectionsData(string fileName)
 		{
             List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
-            foreach(KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+
+            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
 			{
 				if (node.Value.roadTypes.Contains("motorway"))
 				{
@@ -47,19 +49,139 @@ namespace OSM_Connecitvity_Backend_Revised
                     }
                 }
 			}
+
+
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
+        }
+
+        public void generateDisconnectionsDataBFS(string fileName)
+        {
+            List<JunctionNode> disconnectionNodes = new List<JunctionNode>();
+
+            //dictionary having Key= label value and Value = set of subtree for that label
+            Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
+
+            //queue for the children nodes
+            Queue children;
+
+            //list of road types for which we are searching for disconnections
+            List<string> roadClassification = new List<string>() {"motorway","motorway_link"};
+
+            int currentLabel=0;
+
+            //list of labels to be removed after bfs
+            HashSet<int> LabelsToBeRemoved = new HashSet<int>();
+
+            //loop thru all the nodes in junctionnodemap
+            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+            {
+                //if a junction node contains any of the required road type and is unlabeled
+                if (node.Value.roadTypes.Intersect(roadClassification).Any() && node.Value.label == 0)
+                {
+                    //set of all the nodes of 1 type of label
+                    HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
+
+                    currentLabel++;
+                    children = new Queue();
+
+                    //initialize the parent with the current label
+                    node.Value.label = currentLabel;
+                    children.Enqueue(node.Value);
+                    subtree.Add(node.Value);
+
+                    while(children.Count != 0)
+                    {
+                        JunctionNode currentNode = (JunctionNode)children.Dequeue();
+                        disconnectionNodes.Add(currentNode);
+
+                        //look thru all the ways this particular node is present in
+                        foreach(string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
+                        {
+                            Way wayObject = WayHashMap.GetValueOrDefault(way);
+
+                            //if the road classification matches
+                            if (roadClassification.Contains(wayObject.roadClass))
+                            {
+                                //get the label of the start node of that way
+                                int label = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label;
+
+                                //if its label doesnt match the current label
+                                if (label != currentLabel)
+                                {
+                                    //if the node is already labeled
+                                    if(label != 0)
+                                    {
+                                        //append the entire subtree of that label to that of the currentlabel
+                                        subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
+
+                                        //flag that label
+                                        LabelsToBeRemoved.Add(label);
+                                    }
+                                    //else it means that this node is unlabeled and add it to the children queue
+                                    else
+                                    {
+                                        JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label = currentLabel;
+                                        children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
+                                        subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
+                                    }
+                                    
+                                }
+
+                                //get the label of the end node of that way
+                                label = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label;
+                                //if its label doesnt match the current label
+                                if (label !=currentLabel)
+                                {
+                                    //if the node is already labeled
+                                    if (label != 0)
+                                    {
+                                        //append the entire subtree of that label to that of the currentlabel
+                                        subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
+                                        //flag that label
+                                        LabelsToBeRemoved.Add(label);
+                                    }
+                                    //else it means that this node is unlabeled and add it to the children queue
+                                    else
+                                    {
+                                        JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label = currentLabel;
+                                        children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
+                                        subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
+                                    }
+                                }
+                            }
+                        }   
+                    }
+                    //add the subtree to the dictionary
+                    LabelToSubtrees.Add(currentLabel,subtree);
+                }
+            }
+
+            //remove all the labels which were merged with other labels
+            foreach(int label in LabelsToBeRemoved)
+            {
+                LabelToSubtrees.Remove(label);
+            }
+
+            //write it to the file
             File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
         }
 
         public void generateRoadNetwork(List<string> roadTypes,string fileName)
 		{
             List<Way> ways = new List<Way>();
+
+            //loop thru all the ways in the ways hashmap
             foreach(KeyValuePair<string,Way> way in WayHashMap)
 			{
+                //if the road type of the way is equal to one of the given road types
 				if (roadTypes.Contains(way.Value.roadClass))
 				{
+                    //add it to the list
                     ways.Add(way.Value);
 				}
 			}
+
+            //write it to the file
             File.WriteAllText(fileName, JsonConvert.SerializeObject(ways));
         }
     }

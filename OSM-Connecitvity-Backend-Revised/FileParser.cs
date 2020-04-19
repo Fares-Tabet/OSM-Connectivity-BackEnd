@@ -1,10 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Linq;
 
 namespace OSM_Connecitvity_Backend_Revised
@@ -15,7 +13,7 @@ namespace OSM_Connecitvity_Backend_Revised
         public string OsmFilePath;
 
         //This dictionary contains the all the node coordinates and will be serialized into json and added to the DataFile folder
-        Dictionary<string, string> NodeDictionary = new Dictionary<string, string>();
+        Dictionary<string, Node> NodeDictionary = new Dictionary<string, Node>();
 
         public FileParser(string OsmFilePath)
         {
@@ -27,7 +25,7 @@ namespace OSM_Connecitvity_Backend_Revised
             populateNodeDictionary();
             XDocument doc = XDocument.Load(OsmFilePath);
             List<XElement> elements = doc.Descendants("way").ToList();
-
+                
             //This dictionary contains the way objects and will be serialized into json and added to the DataFile folder
             Dictionary<string,Way> wayDictionary = new Dictionary<string, Way>();
 
@@ -63,22 +61,20 @@ namespace OSM_Connecitvity_Backend_Revised
                 // loop though the nodes of each way and populate the way object
                 foreach (XElement nd in el.Descendants("nd").ToList())
                 {
-                    string[] coordinates = (NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value,"")).Split(",");
-                    Node node = new Node(nd.FirstAttribute.Value, float.Parse(coordinates[0]), float.Parse(coordinates[1]));
+                    Node node = NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value);
                     nodeList.Add(node);
+                    NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value).ways.Add(way.Id);
                 }
 
                 way.nodes = nodeList;
 
                 // popoulate the start and end node field of the way object
                 XElement endPoint1 = el.Descendants("nd").ToList().First();
-                string[] endPointCoordinates1 = (NodeDictionary.GetValueOrDefault(endPoint1.FirstAttribute.Value,"")).Split(",");
-                Node startNode = new Node(endPoint1.FirstAttribute.Value, float.Parse(endPointCoordinates1[0]), float.Parse(endPointCoordinates1[1]));
+                Node startNode = NodeDictionary.GetValueOrDefault(endPoint1.FirstAttribute.Value);
                 way.startNode = startNode;
 
                 XElement endPoint2 = el.Descendants("nd").ToList().Last();
-                string[] endPointCoordinates2 = (NodeDictionary.GetValueOrDefault(endPoint2.FirstAttribute.Value,"")).Split(",");
-                Node endNode = new Node(endPoint2.FirstAttribute.Value, float.Parse(endPointCoordinates2[0]), float.Parse(endPointCoordinates2[1]));
+                Node endNode = NodeDictionary.GetValueOrDefault(endPoint2.FirstAttribute.Value);
                 way.endNode = endNode;
 
                 // populate the junctionNodeDictionary with the first and last node of each way
@@ -92,7 +88,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
                 else
                 {
-                    firstJunction = new JunctionNode(startNode.Id, new Dictionary<string, string>() { { way.Id, endNode.Id } }, new List<string>() { { way.roadClass } }, float.Parse(endPointCoordinates1[0]), float.Parse(endPointCoordinates1[1]));
+                    firstJunction = new JunctionNode(startNode.Id, new Dictionary<string, string>() { { way.Id, endNode.Id } }, new List<string>() { { way.roadClass } }, endNode.Lat, endNode.Lng);
                     junctionNodeDictionary.Add(startNode.Id, firstJunction);
                 }
 
@@ -106,10 +102,11 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
                 else
                 {
-                    lastJunction = new JunctionNode(endNode.Id, new Dictionary<string, string>() { { way.Id, startNode.Id } }, new List<string>() { { way.roadClass } }, float.Parse(endPointCoordinates2[0]), float.Parse(endPointCoordinates2[1]));
+                    lastJunction = new JunctionNode(endNode.Id, new Dictionary<string, string>() { { way.Id, startNode.Id } }, new List<string>() { { way.roadClass } }, startNode.Lat, startNode.Lng);
                     junctionNodeDictionary.Add(endNode.Id, lastJunction);
                 }
                 wayDictionary.Add(way.Id,way);
+                Console.WriteLine(way.Id);
 
             }
 
@@ -119,21 +116,22 @@ namespace OSM_Connecitvity_Backend_Revised
             // Create the junctionNodes data file
             File.WriteAllText("junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
 
+            // Create the node data file
+            File.WriteAllText("NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
+
         }
 
         public void populateNodeDictionary()
         {
-
             XDocument doc = XDocument.Load(OsmFilePath);
             List<XElement> elements = doc.Descendants("node").ToList();
             foreach (XElement el in elements)
             {
                 String nodeid = el.Attribute("id").Value;
-                NodeDictionary.Add(nodeid, el.Attribute("lat").Value + "," + el.Attribute("lon").Value);
+                Console.WriteLine(nodeid);
+                Node node = new Node(nodeid, float.Parse(el.Attribute("lat").Value), float.Parse(el.Attribute("lon").Value));
+                NodeDictionary.Add(nodeid, node);
             }
-
-            // Create the node data file
-            File.WriteAllText("NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
         }
     }
 }
