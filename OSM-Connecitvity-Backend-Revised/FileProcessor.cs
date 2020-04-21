@@ -22,13 +22,14 @@ namespace OSM_Connecitvity_Backend_Revised
             JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
         }
 
-        //finding disconnections
-        public void generateDisconnectionsData(string fileName)
+        //finding incorrect highway = motorway connections
+        public void generateIncorrectMotorwayConnections(string fileName)
 		{
             List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
 
+            //for each junction node
             foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
-			{
+			{   //if it is connected to a motorway 
 				if (node.Value.roadTypes.Contains("motorway"))
 				{
                     int res = (from x in node.Value.roadTypes
@@ -54,7 +55,8 @@ namespace OSM_Connecitvity_Backend_Revised
             File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
         }
 
-        public void generateDisconnectionsDataBFS(string fileName)
+        // This method traverses the road networks and searches for disconnections in the road networked formed by the specified classes in the parameter list
+        public void generateDisconnectionsDataBFS(List<string> roadClassification, string fileName)
         {
             List<JunctionNode> disconnectionNodes = new List<JunctionNode>();
             Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
@@ -63,9 +65,6 @@ namespace OSM_Connecitvity_Backend_Revised
 
             //queue for the children nodes
             Queue children;
-
-            //list of road types for which we are searching for disconnections
-            List<string> roadClassification = new List<string>() {"motorway","motorway_link"};
 
             int currentLabel=0;
 
@@ -150,7 +149,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
                                     }
-                                    //else it means that this node is unlabeled and add it to the children queue
+                                    //else this node is unlabeled and add it to the children queue
                                     else
                                     {
                                         JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label = currentLabel;
@@ -177,6 +176,7 @@ namespace OSM_Connecitvity_Backend_Revised
             File.WriteAllText(fileName, JsonConvert.SerializeObject(LabelToSubtrees));
         }
 
+        //This method generates a file to draw the road network of the specified classifications in the list parameter
         public void generateRoadNetwork(List<string> roadTypes,string fileName)
 		{
             List<Way> ways = new List<Way>();

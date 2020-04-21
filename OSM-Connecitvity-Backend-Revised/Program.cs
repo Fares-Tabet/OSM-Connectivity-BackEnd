@@ -9,9 +9,13 @@ namespace OSM_Connecitvity_Backend_Revised
         {
             //FileParser parser = new FileParser("NZ_allRoads.xml");
             //parser.createDataFiles();
+
+
             FileProcessor fileProcessor = new FileProcessor();
-            //fileProcessor.generateRoadNetwork(new List<string>() { "trunk","trunk_link"},"NZ_trunk.json");
-            fileProcessor.generateDisconnectionsDataBFS("NZ_disconnections.json");
+
+            //fileProcessor.generateIncorrectMotorwayConnections("NZ_IncorrectConnections.json");
+
+            fileProcessor.generateDisconnectionsDataBFS( new List<string>() { "motorway", "motorway_link" }, "NZ_disconnections.json");
         }
     }
 }
