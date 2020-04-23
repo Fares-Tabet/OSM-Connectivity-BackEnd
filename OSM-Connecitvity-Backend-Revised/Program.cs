@@ -7,8 +7,8 @@ namespace OSM_Connecitvity_Backend_Revised
     {
         static void Main(string[] args)
         {
-            //FileParser parser = new FileParser("NZ_allRoads.xml");
-            //parser.createDataFiles();
+            FileParser parser = new FileParser("NZ_allRoads.xml");
+            parser.createDataFiles();
 
 
             FileProcessor fileProcessor = new FileProcessor();
