@@ -15,49 +15,45 @@ namespace OSM_Connecitvity_Backend_Revised
         Dictionary<string, Way> WayHashMap;
         Dictionary<string, JunctionNode> JunctionNodeHashMap;
 
-        //distinct color codes for allocating them to different subgraphs
-        static string[] ColourValues = new string[] {
+        //Set of all disjoint graphs color coded 
+        HashSet<Way> DisjointedSubTreeWays;
 
-"#63b598", "#ce7d78", "#ea9e70", "#a48a9e", "#c6e1e8", "#648177", "#0d5ac1",
-"#f205e6", "#1c0365", "#14a9ad", "#4ca2f9", "#a4e43f", "#d298e2", "#6119d0",
-"#d2737d", "#c0a43c", "#f2510e", "#651be6", "#79806e", "#61da5e", "#cd2f00",
-"#9348af", "#01ac53", "#c5a4fb", "#996635", "#b11573", "#4bb473", "#75d89e",
-"#2f3f94", "#2f7b99", "#da967d", "#34891f", "#b0d87b", "#ca4751", "#7e50a8",
-"#c4d647", "#e0eeb8", "#11dec1", "#289812", "#566ca0", "#ffdbe1", "#2f1179",
-"#935b6d", "#916988", "#513d98", "#aead3a", "#9e6d71", "#4b5bdc", "#0cd36d",
-"#250662", "#cb5bea", "#228916", "#ac3e1b", "#df514a", "#539397", "#880977",
-"#f697c1", "#ba96ce", "#679c9d", "#c6c42c", "#5d2c52", "#48b41b", "#e1cf3b",
-"#5be4f0", "#57c4d8", "#a4d17a", "#225b8", "#be608b", "#96b00c", "#088baf",
-"#f158bf", "#e145ba", "#ee91e3", "#05d371", "#5426e0", "#4834d0", "#802234",
-"#6749e8", "#0971f0", "#8fb413", "#b2b4f0", "#c3c89d", "#c9a941", "#41d158",
-"#fb21a3", "#51aed9", "#5bb32d", "#807fb", "#21538e", "#89d534", "#d36647",
-"#7fb411", "#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3",
-"#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec",
-"#1bb699", "#6b2e5f", "#64820f", "#21538e", "#89d534", "#d36647",
-"#7fb411", "#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3",
-"#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec",
-"#1bb699", "#6b2e5f", "#64820f", "#9cb64a", "#996c48", "#9ab9b7",
-"#06e052", "#e3a481", "#0eb621", "#fc458e", "#b2db15", "#aa226d", "#792ed8",
-"#73872a", "#520d3a", "#cefcb8", "#a5b3d9", "#7d1d85", "#c4fd57", "#f1ae16",
-"#8fe22a", "#ef6e3c", "#243eeb", "#1dc18", "#dd93fd", "#3f8473", "#e7dbce",
-"#421f79", "#7a3d93", "#635f6d", "#93f2d7", "#9b5c2a", "#15b9ee", "#0f5997",
-"#409188", "#911e20", "#1350ce", "#10e5b1", "#fff4d7", "#cb2582", "#ce00be",
-"#32d5d6", "#17232", "#608572", "#c79bc2", "#00f87c", "#77772a", "#6995ba",
-"#fc6b57", "#f07815", "#8fd883", "#060e27", "#96e591", "#21d52e", "#d00043",
-"#b47162", "#1ec227", "#4f0f6f", "#1d1d58", "#947002", "#bde052", "#e08c56",
-"#28fcfd", "#bb09b", "#36486a", "#d02e29", "#1ae6db", "#3e464c", "#a84a8f",
-"#911e7e", "#3f16d9", "#0f525f", "#ac7c0a", "#b4c086", "#c9d730", "#30cc49",
-"#3d6751", "#fb4c03", "#640fc1", "#62c03e", "#d3493a", "#88aa0b", "#406df9",
-"#615af0", "#4be47", "#2a3434", "#4a543f", "#79bca0", "#a8b8d4", "#00efd4",
-"#7ad236", "#7260d8", "#1deaa7", "#06f43a", "#823c59", "#e3d94c", "#dc1c06",
-"#f53b2a", "#b46238", "#2dfff6", "#a82b89", "#1a8011", "#436a9f", "#1a806a",
-"#4cf09d", "#c188a2", "#67eb4b", "#b308d3", "#fc7e41", "#af3101", "#ff065",
-"#71b1f4", "#a2f8a5", "#e23dd0", "#d3486d", "#00f7f9", "#474893", "#3cec35",
-"#1c65cb", "#5d1d0c", "#2d7d2a", "#ff3420", "#5cdd87", "#a259a4", "#e4ac44",
-"#1bede6", "#8798a4", "#d7790f", "#b2c24f", "#de73c2", "#d70a9c", "#25b67",
-"#88e9b8", "#c2b0e2", "#86e98f", "#ae90e2", "#1a806b", "#436a9e", "#0ec0ff",
-"#f812b3", "#b17fc9", "#8d6c2f", "#d3277a", "#2ca1ae", "#9685eb", "#8a96c6",
-"#dba2e6", "#76fc1b", "#608fa4", "#20f6ba", "#07d7f6", "#dce77a", "#77ecca"
+        public Dictionary<string, int> nodeToVertex { get; set; }
+    //distinct color codes for allocating them to different subgraphs
+    static string[] ColorValues = new string[] {
+
+"#63b598", "#ce7d78", "#ea9e70", "#a48a9e", "#c6e1e8", "#648177", "#0d5ac1", "#f205e6", "#1c0365", "#14a9ad", "#4ca2f9", "#a4e43f", "#d298e2", "#6119d0",
+"#d2737d", "#c0a43c", "#f2510e", "#651be6", "#79806e", "#61da5e", "#cd2f00","#9348af", "#01ac53", "#c5a4fb", "#996635", "#b11573", "#4bb473", "#75d89e",
+"#2f3f94", "#2f7b99", "#da967d", "#34891f", "#b0d87b", "#ca4751", "#7e50a8","#c4d647", "#e0eeb8", "#11dec1", "#289812", "#566ca0", "#ffdbe1", "#2f1179",
+"#935b6d", "#916988", "#513d98", "#aead3a", "#9e6d71", "#4b5bdc", "#0cd36d","#250662", "#cb5bea", "#228916", "#ac3e1b", "#df514a", "#539397", "#880977",
+"#f697c1", "#ba96ce", "#679c9d", "#c6c42c", "#5d2c52", "#48b41b", "#e1cf3b","#5be4f0", "#57c4d8", "#a4d17a", "#225b8", "#be608b", "#96b00c", "#088baf",
+"#f158bf", "#e145ba", "#ee91e3", "#05d371", "#5426e0", "#4834d0", "#802234","#6749e8", "#0971f0", "#8fb413", "#b2b4f0", "#c3c89d", "#c9a941", "#41d158",
+"#fb21a3", "#51aed9", "#5bb32d", "#807fb", "#21538e", "#89d534", "#d36647","#7fb411", "#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3",
+"#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec","#1bb699", "#6b2e5f", "#64820f", "#21538e", "#89d534", "#d36647","#7fb411",
+"#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3","#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec",
+"#1bb699", "#6b2e5f", "#64820f", "#9cb64a", "#996c48", "#9ab9b7","#06e052", "#e3a481", "#0eb621", "#fc458e", "#b2db15", "#aa226d", "#792ed8",
+"#73872a", "#520d3a", "#cefcb8", "#a5b3d9", "#7d1d85", "#c4fd57", "#f1ae16","#8fe22a", "#ef6e3c", "#243eeb", "#1dc18", "#dd93fd", "#3f8473", "#e7dbce",
+"#421f79", "#7a3d93", "#635f6d", "#93f2d7", "#9b5c2a", "#15b9ee", "#0f5997","#409188", "#911e20", "#1350ce", "#10e5b1", "#fff4d7", "#cb2582", "#ce00be",
+"#32d5d6", "#17232", "#608572", "#c79bc2", "#00f87c", "#77772a", "#6995ba","#fc6b57", "#f07815", "#8fd883", "#060e27", "#96e591", "#21d52e", "#d00043",
+"#b47162", "#1ec227", "#4f0f6f", "#1d1d58", "#947002", "#bde052", "#e08c56","#28fcfd", "#bb09b", "#36486a", "#d02e29", "#1ae6db", "#3e464c", "#a84a8f",
+"#911e7e", "#3f16d9", "#0f525f", "#ac7c0a", "#b4c086", "#c9d730", "#30cc49","#3d6751", "#fb4c03", "#640fc1", "#62c03e", "#d3493a", "#88aa0b", "#406df9",
+"#615af0", "#4be47", "#2a3434", "#4a543f", "#79bca0", "#a8b8d4", "#00efd4","#7ad236", "#7260d8", "#1deaa7", "#06f43a", "#823c59", "#e3d94c", "#dc1c06",
+"#f53b2a", "#b46238", "#2dfff6", "#a82b89", "#1a8011", "#436a9f", "#1a806a","#4cf09d", "#c188a2", "#67eb4b", "#b308d3", "#fc7e41", "#af3101", "#ff065",
+"#71b1f4", "#a2f8a5", "#e23dd0", "#d3486d", "#00f7f9", "#474893", "#3cec35","#1c65cb", "#5d1d0c", "#2d7d2a", "#ff3420", "#5cdd87", "#a259a4", "#e4ac44",
+"#1bede6", "#8798a4", "#d7790f", "#b2c24f", "#de73c2", "#d70a9c", "#25b67","#88e9b8", "#c2b0e2", "#86e98f", "#ae90e2", "#1a806b", "#436a9e", "#0ec0ff",
+"#f812b3", "#b17fc9", "#8d6c2f", "#d3277a", "#2ca1ae", "#9685eb", "#8a96c6","#dba2e6", "#76fc1b", "#608fa4", "#20f6ba", "#07d7f6", "#dce77a", "#77ecca",
+"#fb21a3", "#51aed9", "#5bb32d", "#807fb", "#21538e", "#89d534", "#d36647","#7fb411", "#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3",
+"#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec","#1bb699", "#6b2e5f", "#64820f", "#21538e", "#89d534", "#d36647","#7fb411",
+"#0023b8", "#3b8c2a", "#986b53", "#f50422", "#983f7a", "#ea24a3","#79352c", "#521250", "#c79ed2", "#d6dd92", "#e33e52", "#b2be57", "#fa06ec",
+"#1bb699", "#6b2e5f", "#64820f", "#9cb64a", "#996c48", "#9ab9b7","#06e052", "#e3a481", "#0eb621", "#fc458e", "#b2db15", "#aa226d", "#792ed8",
+"#73872a", "#520d3a", "#cefcb8", "#a5b3d9", "#7d1d85", "#c4fd57", "#f1ae16","#8fe22a", "#ef6e3c", "#243eeb", "#1dc18", "#dd93fd", "#3f8473", "#e7dbce",
+"#421f79", "#7a3d93", "#635f6d", "#93f2d7", "#9b5c2a", "#15b9ee", "#0f5997","#409188", "#911e20", "#1350ce", "#10e5b1", "#fff4d7", "#cb2582", "#ce00be",
+"#32d5d6", "#17232", "#608572", "#c79bc2", "#00f87c", "#77772a", "#6995ba","#fc6b57", "#f07815", "#8fd883", "#060e27", "#96e591", "#21d52e", "#d00043",
+"#911e7e", "#3f16d9", "#0f525f", "#ac7c0a", "#b4c086", "#c9d730", "#30cc49","#3d6751", "#fb4c03", "#640fc1", "#62c03e", "#d3493a", "#88aa0b", "#406df9",
+"#615af0", "#4be47", "#2a3434", "#4a543f", "#79bca0", "#a8b8d4", "#00efd4","#7ad236", "#7260d8", "#1deaa7", "#06f43a", "#823c59", "#e3d94c", "#dc1c06",
+"#f53b2a", "#b46238", "#2dfff6", "#a82b89", "#1a8011", "#436a9f", "#1a806a","#4cf09d", "#c188a2", "#67eb4b", "#b308d3", "#fc7e41", "#af3101", "#ff065",
+"#71b1f4", "#a2f8a5", "#e23dd0", "#d3486d", "#00f7f9", "#474893", "#3cec35","#1c65cb", "#5d1d0c", "#2d7d2a", "#ff3420", "#5cdd87"
+
     };
 
         public FileProcessor()
@@ -65,6 +61,34 @@ namespace OSM_Connecitvity_Backend_Revised
             NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string,Node>>(File.ReadAllText(@"NodeDictionary.json"));
             WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
             JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
+        }
+
+        //method which taking in the 
+        public void getWaysFromNodes()
+        {
+            HashSet<JunctionNode> set = JsonConvert.DeserializeObject<HashSet<JunctionNode>>(File.ReadAllText(@"newpath.json"));
+            HashSet<Way> ways = new HashSet<Way>();
+
+            Dictionary<string, JunctionNode> pathDictionary = new Dictionary<string, JunctionNode>();
+            foreach (JunctionNode node in set)
+            {
+                pathDictionary.Add(node.Id,node);
+            }
+
+            foreach(KeyValuePair<string,JunctionNode> pair in pathDictionary)
+            {
+                foreach(KeyValuePair<string,string> node in pair.Value.wayToNodeMap)
+                {
+                    if (pathDictionary.ContainsKey(node.Value) && (
+                            WayHashMap.GetValueOrDefault(node.Key).roadClass.Equals("trunk")||
+                            WayHashMap.GetValueOrDefault(node.Key).roadClass.Equals("trunk_link")))
+                    {
+                        ways.Add(WayHashMap.GetValueOrDefault(node.Key));
+                    }
+                }
+            }
+            File.WriteAllText("demoSubTreeConnection.json", JsonConvert.SerializeObject(ways.ToList()));
+
         }
 
         //finding incorrect highway = motorway connections
@@ -103,8 +127,8 @@ namespace OSM_Connecitvity_Backend_Revised
         // This method traverses the road networks and searches for disconnections in the road networked formed by the specified classes in the parameter list
         public void generateDisconnectionsDataBFS(List<string> roadClassification, string fileName)
         {
-            List<JunctionNode> disconnectionNodes = new List<JunctionNode>();
             Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
+
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
 
@@ -137,7 +161,6 @@ namespace OSM_Connecitvity_Backend_Revised
                     while(children.Count != 0)
                     {
                         JunctionNode currentNode = (JunctionNode)children.Dequeue();
-                        disconnectionNodes.Add(currentNode);
 
                         //look thru all the ways this particular node is present in
                         foreach(string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
@@ -217,8 +240,12 @@ namespace OSM_Connecitvity_Backend_Revised
                 LabelToSubtrees.Remove(label);
             }
 
+           // connectSubGraphs(LabelToSubtrees);
+
+            //-----------------------------Code to color code the sub graphs---------------------------//
+
             //Set of all disjoint graphs color coded 
-            HashSet<Way> DisjointedSubTreeWays = new HashSet<Way>();
+            DisjointedSubTreeWays = new HashSet<Way>();
 
             //loop over all ways
             foreach (KeyValuePair<string, Way> way in WayHashMap)
@@ -230,17 +257,200 @@ namespace OSM_Connecitvity_Backend_Revised
                     //check which graph the way belongs to
                     if (LabelToSubtrees.GetValueOrDefault(labelNodes).Contains(JunctionNodeHashMap.GetValueOrDefault(way.Value.startNode.Id)))
                     {
-                        //color code it accordingly
-                        way.Value.colorCode = ColourValues[labelNodes];
-
-                        //add it to the set which will be converted to a json file
-                        DisjointedSubTreeWays.Add(way.Value);
+                        if (roadClassification.Contains(way.Value.roadClass))
+                        {
+                            //color code it accordingly
+                            way.Value.colorCode = ColorValues[labelNodes];
+                            //add it to the set which will be converted to a json file
+                            DisjointedSubTreeWays.Add(way.Value);
+                        }
                     }
+                       
                 }
             }
 
             //write it to the file
             File.WriteAllText(fileName, JsonConvert.SerializeObject(DisjointedSubTreeWays.ToList()));
+
+            //------------------------Code to color code the sub graphs ends here-----------------------//
+
+            //generateStronglyDisconnectedComponents();
+        }
+
+        //method to extract endpoint nodes from the subtree graphs
+        private void connectSubGraphs(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees)
+        {
+            Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes = new Dictionary<int, HashSet<JunctionNode>>();
+
+            //traverse thru all the keys of the labelToSubtrees
+            foreach (int label in LabelToSubtrees.Keys)
+            {
+                //traverse thru its hashset
+                foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
+                {
+                    //for each node in a subgraph count the distinct road network types
+                    int distintlabels = (from x in node.roadTypes select x).Distinct().Count();
+
+                    //if they contain a motorway/link and also another road type then add it to the dictionary
+                    if (distintlabels > 2 && (node.roadTypes.Contains("motorway") || node.roadTypes.Contains("motorway_link")))
+                    {
+                        HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
+                        set.Add(node);
+                        LabelToEndPointNodes[label] = set;
+
+                    }
+                    else if (distintlabels == 2 && (!node.roadTypes.Contains("motorway") || !node.roadTypes.Contains("motorway_link")))
+                    {
+                        HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
+                        set.Add(node);
+                        LabelToEndPointNodes[label] = set;
+                    }
+                }
+            }
+
+            BFSHelper(LabelToEndPointNodes);
+        }
+
+        private void BFSHelper(Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes)
+        {
+            //traverse thru its hashset
+            foreach (JunctionNode node in LabelToEndPointNodes.FirstOrDefault().Value)
+            {
+                Console.WriteLine("node"+ node.Id);
+                //queue for the children nodes
+                Queue children = new Queue();
+                children.Enqueue(new List<JunctionNode>() { node });
+
+                HashSet<string> visitedNodes = new HashSet<string>();
+
+                while (children.Count != 0)
+                {
+                    List<JunctionNode> path = (List<JunctionNode>)children.Dequeue();
+                    JunctionNode currentNode = path.Last();
+
+                    //look thru all the ways this particular node is present in
+                    foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
+                    {
+                        if(!WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") && !WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link"))
+                        {
+                            //if we want to achieve connectivity only using trunk and trunklinks
+                            if (WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk_link"))
+                            {
+                                JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
+
+                                if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                {
+                                    //if we reach the first node of another subtree
+                                    if (startNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (startNode.roadTypes.Contains("motorway") || startNode.roadTypes.Contains("motorway_link")))
+                                    {
+                                        Console.WriteLine(path.Count);
+                                        path.Add(startNode);
+                                        File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+
+                                    }
+                                    List<JunctionNode> new_path = new List<JunctionNode>();
+                                    new_path.AddRange(path);
+                                    new_path.Add(startNode);
+                                    children.Enqueue(new_path);
+                                }
+
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);
+                                if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                {
+                                    //if we reach the first node of another subtree
+                                    if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")))
+                                    {
+                                        Console.WriteLine(path.Count);
+                                        path.Add(endNode);
+                                        File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+
+                                    }
+                                    List<JunctionNode> new_path = new List<JunctionNode>();
+                                    new_path.AddRange(path);
+                                    new_path.Add(endNode);
+                                    children.Enqueue(new_path);
+                                }
+                            }
+                        }
+                    }
+                    visitedNodes.Add(currentNode.Id);
+                }
+            }
+               
+        }
+
+        public void generateStronglyDisconnectedComponents()
+        {
+            Dictionary<string, HashSet<Way>> colorToWaysSet = new Dictionary<string, HashSet<Way>>();
+            foreach(Way way in DisjointedSubTreeWays)
+            {
+                HashSet<Way> set = colorToWaysSet.GetValueOrDefault(way.colorCode, new HashSet<Way>());
+                set.Add(way);
+                colorToWaysSet[way.colorCode] = set;
+            }
+
+            HashSet<Way> ways = colorToWaysSet.Values.FirstOrDefault();
+
+            //total vertices in a graph
+            int V = 2000;
+
+            nodeToVertex = new Dictionary<string, int>();
+
+            Graph g = new Graph(V);
+            foreach(Way way in ways)
+            {
+                int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id,nodeToVertex.Keys.Count+1);
+                if (vertix1 > nodeToVertex.Count)
+                    nodeToVertex.Add(way.startNode.Id, vertix1);
+
+                int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count+1);
+                if (vertix2 > nodeToVertex.Count)
+                    nodeToVertex.Add(way.endNode.Id, vertix2);
+
+                    g.addEdge(vertix1, vertix2);
+                
+                if (way.oneWay.Equals("no"))
+                {
+                    g.addEdge(vertix2, vertix1);
+                }
+            }
+
+            // The main function that finds and prints all strongly 
+            // connected components 
+
+            Stack stack = new Stack();
+
+            // Mark all the vertices as not visited (For first DFS) 
+            bool[] visited = new bool[V];
+            for (int i = 0; i < V; i++)
+                visited[i] = false;
+
+            // Fill vertices in stack according to their finishing 
+            // times 
+            for (int i = 0; i < V; i++)
+                if (visited[i] == false)
+                    g.fillOrder(i, visited, stack);
+
+            // Create a reversed graph 
+            Graph gr = g.getTranspose();
+
+            // Mark all the vertices as not visited (For second DFS) 
+            for (int i = 0; i < V; i++)
+                visited[i] = false;
+
+            // Now process all vertices in order defined by Stack 
+            while (stack.Count != 0)
+            {
+                // Pop a vertex from stack 
+                int v = (int)stack.Pop();
+
+                // Print Strongly connected component of the popped vertex 
+                if (visited[v] == false)
+                {
+                        gr.DFSUtil(v, visited);
+                    Console.WriteLine("\n");
+                }
+            }
         }
 
         //This method generates a file to draw the road network of the specified classifications in the list parameter

@@ -40,16 +40,16 @@ namespace OSM_Connecitvity_Backend_Revised
                 way.Id = el.FirstAttribute.Value;
 
                 List<XElement> inspectedTag = el.Descendants("tag").Where(x => (string)x.Attribute("k") == "highway").ToList();
-                way.roadClass = inspectedTag.Count == 0 ? null : ((XElement)inspectedTag.First()).LastAttribute.Value;
+                way.roadClass = inspectedTag.Count == 0 ? "" : ((XElement)inspectedTag.First()).LastAttribute.Value;
 
                 inspectedTag = el.Descendants("tag").Where(x => (string)x.Attribute("k") == "name").ToList();
-                way.name = inspectedTag.Count == 0 ? null : ((XElement)inspectedTag.First()).LastAttribute.Value;
+                way.name = inspectedTag.Count == 0 ? "" : ((XElement)inspectedTag.First()).LastAttribute.Value;
 
                 inspectedTag = el.Descendants("tag").Where(x => (string)x.Attribute("k") == "maxspeed").ToList();
-                way.maxSpeed = inspectedTag.Count == 0 ? null : ((XElement)inspectedTag.First()).LastAttribute.Value;
+                way.maxSpeed = inspectedTag.Count == 0 ? "" : ((XElement)inspectedTag.First()).LastAttribute.Value;
 
                 inspectedTag = el.Descendants("tag").Where(x => (string)x.Attribute("k") == "oneway").ToList();
-                way.oneWay = inspectedTag.Count == 0 ? null : ((XElement)inspectedTag.First()).LastAttribute.Value;
+                way.oneWay = inspectedTag.Count == 0 ? "" : ((XElement)inspectedTag.First()).LastAttribute.Value;
 
                 // create a temp node = current way node but without any children                
                 XElement temp = new XElement(el);
