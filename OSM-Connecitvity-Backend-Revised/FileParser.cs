@@ -24,7 +24,7 @@ namespace OSM_Connecitvity_Backend_Revised
         {
             populateNodeDictionary();
             XDocument doc = XDocument.Load(OsmFilePath);
-            List<XElement> elements = doc.Descendants("way").ToList();
+            List<XElement> wayElements = doc.Descendants("way").ToList();
                 
             //This dictionary contains the way objects and will be serialized into json and added to the DataFile folder
             Dictionary<string,Way> wayDictionary = new Dictionary<string, Way>();
@@ -32,7 +32,7 @@ namespace OSM_Connecitvity_Backend_Revised
             //This dictionary contains the junctionNOde objects and will be serialized into json and added to the DataFile folder
             Dictionary<string,JunctionNode> junctionNodeDictionary = new Dictionary<string, JunctionNode>();
 
-            foreach (XElement el in elements)
+            foreach (XElement el in wayElements)
             {
                 Way way = new Way();
 
@@ -106,18 +106,21 @@ namespace OSM_Connecitvity_Backend_Revised
                     junctionNodeDictionary.Add(endNode.Id, lastJunction);
                 }
                 wayDictionary.Add(way.Id,way);
-                Console.WriteLine(way.Id);
+                //Console.WriteLine(way.Id);
 
             }
 
             // Create the way data file
             File.WriteAllText("ways.json", JsonConvert.SerializeObject(wayDictionary));
+            Console.WriteLine("Successfully created ways.json file");
 
             // Create the junctionNodes data file
             File.WriteAllText("junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
+            Console.WriteLine("Successfully created junctionNodes.json file");
 
             // Create the node data file
             File.WriteAllText("NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
+            Console.WriteLine("Successfully created NodeDictionary.json file");
 
         }
 
@@ -128,7 +131,7 @@ namespace OSM_Connecitvity_Backend_Revised
             foreach (XElement el in elements)
             {
                 String nodeid = el.Attribute("id").Value;
-                Console.WriteLine(nodeid);
+                //Console.WriteLine(nodeid);
                 Node node = new Node(nodeid, float.Parse(el.Attribute("lat").Value), float.Parse(el.Attribute("lon").Value));
                 NodeDictionary.Add(nodeid, node);
             }

@@ -240,9 +240,10 @@ namespace OSM_Connecitvity_Backend_Revised
                 LabelToSubtrees.Remove(label);
             }
 
-           // connectSubGraphs(LabelToSubtrees);
+            connectSubGraphs(LabelToSubtrees);
 
             //-----------------------------Code to color code the sub graphs---------------------------//
+
 
             //Set of all disjoint graphs color coded 
             DisjointedSubTreeWays = new HashSet<Way>();
@@ -269,10 +270,12 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
             }
 
-            //write it to the file
-            File.WriteAllText(fileName, JsonConvert.SerializeObject(DisjointedSubTreeWays.ToList()));
+
 
             //------------------------Code to color code the sub graphs ends here-----------------------//
+
+            //write it to the file
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(DisjointedSubTreeWays.ToList()));
 
             //generateStronglyDisconnectedComponents();
         }
@@ -288,35 +291,40 @@ namespace OSM_Connecitvity_Backend_Revised
                 //traverse thru its hashset
                 foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
                 {
-                    //for each node in a subgraph count the distinct road network types
-                    int distintlabels = (from x in node.roadTypes select x).Distinct().Count();
 
-                    //if they contain a motorway/link and also another road type then add it to the dictionary
-                    if (distintlabels > 2 && (node.roadTypes.Contains("motorway") || node.roadTypes.Contains("motorway_link")))
+                    // checking what road types is this node connected to from the NodeDictionary and not LabelTosubtree because we handle the 'T intersection' problem there
+                    foreach(string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
                     {
-                        HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
-                        set.Add(node);
-                        LabelToEndPointNodes[label] = set;
+                        if(!(WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link")))
+                        {
+                            HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
+                            set.Add(node);
+                            LabelToEndPointNodes[label] = set;
+                        }
+                    }
 
-                    }
-                    else if (distintlabels == 2 && (!node.roadTypes.Contains("motorway") || !node.roadTypes.Contains("motorway_link")))
-                    {
-                        HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
-                        set.Add(node);
-                        LabelToEndPointNodes[label] = set;
-                    }
                 }
             }
 
             BFSHelper(LabelToEndPointNodes);
         }
 
+
+        //Here is where we run the BFS on the endpoint nodes of the graphs 
         private void BFSHelper(Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes)
         {
             //traverse thru its hashset
             foreach (JunctionNode node in LabelToEndPointNodes.FirstOrDefault().Value)
             {
-                Console.WriteLine("node"+ node.Id);
+                if(node.Id.Equals("5703641601"))
+                {
+
+                }
+
+                Console.WriteLine("node: "+ node.Id);
+
+
+
                 //queue for the children nodes
                 Queue children = new Queue();
                 children.Enqueue(new List<JunctionNode>() { node });
@@ -345,8 +353,8 @@ namespace OSM_Connecitvity_Backend_Revised
                                     {
                                         Console.WriteLine(path.Count);
                                         path.Add(startNode);
-                                        File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
-
+                                        //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                        goto end_of_while_loop;
                                     }
                                     List<JunctionNode> new_path = new List<JunctionNode>();
                                     new_path.AddRange(path);
@@ -362,8 +370,8 @@ namespace OSM_Connecitvity_Backend_Revised
                                     {
                                         Console.WriteLine(path.Count);
                                         path.Add(endNode);
-                                        File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
-
+                                        //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                        goto end_of_while_loop;
                                     }
                                     List<JunctionNode> new_path = new List<JunctionNode>();
                                     new_path.AddRange(path);
@@ -375,6 +383,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     }
                     visitedNodes.Add(currentNode.Id);
                 }
+                end_of_while_loop: { }
             }
                
         }
@@ -389,10 +398,10 @@ namespace OSM_Connecitvity_Backend_Revised
                 colorToWaysSet[way.colorCode] = set;
             }
 
-            HashSet<Way> ways = colorToWaysSet.Values.FirstOrDefault();
+            HashSet<Way> ways = colorToWaysSet["#f50422"];
 
             //total vertices in a graph
-            int V = 2000;
+            int V = 30;
 
             nodeToVertex = new Dictionary<string, int>();
 
