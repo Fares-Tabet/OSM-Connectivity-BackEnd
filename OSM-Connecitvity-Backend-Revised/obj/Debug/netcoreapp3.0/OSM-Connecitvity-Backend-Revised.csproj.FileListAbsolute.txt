@@ -44,7 +44,6 @@ C:/Users/Fares/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backen
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/bin/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.dll
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/bin/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.pdb
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/bin/Debug/netcoreapp3.0/Newtonsoft.Json.dll
-/Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.csprojAssemblyReference.cache
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.csproj.CoreCompileInputs.cache
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.AssemblyInfoInputs.cache
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.AssemblyInfo.cs

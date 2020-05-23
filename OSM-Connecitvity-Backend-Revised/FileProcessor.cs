@@ -280,50 +280,77 @@ namespace OSM_Connecitvity_Backend_Revised
             //generateStronglyDisconnectedComponents();
         }
 
-        //method to extract endpoint nodes from the subtree graphs
+        //method to extract outgoing nodes from the subtree graphs
         private void connectSubGraphs(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees)
         {
-            Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes = new Dictionary<int, HashSet<JunctionNode>>();
+            Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint = new Dictionary<int, HashSet<JunctionNode>>();
+
+            //this hashet will contain the incoming endpoint nodes of all of the subgraphs
+            HashSet<JunctionNode> incomingEnpointNodes = new HashSet<JunctionNode>();
+
 
             //traverse thru all the keys of the labelToSubtrees
             foreach (int label in LabelToSubtrees.Keys)
             {
-                //traverse thru its hashset
+                //traverse thru its nodes
                 foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
                 {
 
                     // checking what road types is this node connected to from the NodeDictionary and not LabelTosubtree because we handle the 'T intersection' problem there
                     foreach(string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
                     {
+                        // if the way isnt a motorway or motorway link
                         if(!(WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link")))
                         {
-                            HashSet<JunctionNode> set = LabelToEndPointNodes.GetValueOrDefault(label, new HashSet<JunctionNode>());
-                            set.Add(node);
-                            LabelToEndPointNodes[label] = set;
+                            HashSet<JunctionNode> set = LabelToOutgoingEndPoint.GetValueOrDefault(label, new HashSet<JunctionNode>());
+
+                            // if oneWay = yes or oneWay = null ( we assume it is one way if it is null )
+                            if(!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
+                            {
+                                // we only add nodes that are outgoing from the graph
+                                if (WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id))
+                                {
+                                    set.Add(node);
+                                    set.ExceptWith(incomingEnpointNodes);
+                                    LabelToOutgoingEndPoint[label] = set;
+                                }
+
+                            }
+                            //If oneWay = no
+                            else
+                            {
+                                set.Add(node);
+                                LabelToOutgoingEndPoint[label] = set;
+                                
+                            }
+                            
+                        }
+                        // if the way is a motorway or motorway link, we add its incoming (start) node to a set that we use to subtract the incoming nodes of the subtree
+                        // from the LabelToOutgoingEndPoint
+                        else
+                        {
+                            incomingEnpointNodes.Add(JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id));
                         }
                     }
 
                 }
             }
 
-            BFSHelper(LabelToEndPointNodes);
+            BFSHelper(LabelToOutgoingEndPoint, incomingEnpointNodes);
         }
 
-
         //Here is where we run the BFS on the endpoint nodes of the graphs 
-        private void BFSHelper(Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes)
+        private void BFSHelper(Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes, HashSet<JunctionNode> incomingEnpointNodes)
         {
+            List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
+
             //traverse thru its hashset
             foreach (JunctionNode node in LabelToEndPointNodes.FirstOrDefault().Value)
             {
-                if(node.Id.Equals("5703641601"))
-                {
 
-                }
+                
 
                 Console.WriteLine("node: "+ node.Id);
-
-
 
                 //queue for the children nodes
                 Queue children = new Queue();
@@ -339,44 +366,112 @@ namespace OSM_Connecitvity_Backend_Revised
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                     {
+                        
+
                         if(!WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") && !WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link"))
                         {
                             //if we want to achieve connectivity only using trunk and trunklinks
                             if (WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk_link"))
                             {
                                 JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);                             
 
-                                if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                //if we are at a roundabout
+                                if(startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id))
                                 {
-                                    //if we reach the first node of another subtree
-                                    if (startNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (startNode.roadTypes.Contains("motorway") || startNode.roadTypes.Contains("motorway_link")))
+                                    foreach(Node nd in WayHashMap.GetValueOrDefault(way).nodes)
                                     {
-                                        Console.WriteLine(path.Count);
-                                        path.Add(startNode);
-                                        //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
-                                        goto end_of_while_loop;
+                                        //if one of the middle nodes of the intersection is connected to another way
+                                        if(nd.ways.Count > 1)
+                                        {
+                                            JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
+
+                                            //if we reach the first node of another subtree
+                                            if (junctionNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (junctionNode.roadTypes.Contains("motorway") || junctionNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(junctionNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(junctionNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(junctionNode);
+                                            children.Enqueue(new_path);
+                                            
+                                        }
                                     }
-                                    List<JunctionNode> new_path = new List<JunctionNode>();
-                                    new_path.AddRange(path);
-                                    new_path.Add(startNode);
-                                    children.Enqueue(new_path);
+                                    
                                 }
 
-                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);
-                                if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                //if we aren't at a roundabout
+                                else
                                 {
-                                    //if we reach the first node of another subtree
-                                    if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")))
+                                    // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
+                                    if(!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
                                     {
-                                        Console.WriteLine(path.Count);
-                                        path.Add(endNode);
-                                        //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
-                                        goto end_of_while_loop;
+                                        // if it is one way, then we do not traverse from endnode to startnode because it would violate the oneWay direction
+                                        if(currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
+                                        {
+                                            continue;
+                                        }
+
+                                        // if the direction is respected (from startnode to endnode)
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(endNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(endNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(endNode);
+                                            children.Enqueue(new_path);
+                                        }
                                     }
-                                    List<JunctionNode> new_path = new List<JunctionNode>();
-                                    new_path.AddRange(path);
-                                    new_path.Add(endNode);
-                                    children.Enqueue(new_path);
+                                    // if oneway = no
+                                    else
+                                    {
+                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (startNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (startNode.roadTypes.Contains("motorway") || startNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(startNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(startNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(startNode);
+                                            children.Enqueue(new_path);
+                                        }
+
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(endNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(endNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(endNode);
+                                            children.Enqueue(new_path);
+                                        }
+                                    }        
                                 }
                             }
                         }
