@@ -7,6 +7,13 @@ using System.Text;
 using System.Xml.Linq;
 using Newtonsoft.Json;
 
+//TODO
+/* Do something about the color thing
+ * Merge the two BFS helpers to have only 1 with a boolean to say if we want to call it without target graph or not
+ *
+*/
+
+
 namespace OSM_Connecitvity_Backend_Revised
 {
     public class FileProcessor
@@ -289,9 +296,14 @@ namespace OSM_Connecitvity_Backend_Revised
             HashSet<JunctionNode> incomingEnpointNodes = new HashSet<JunctionNode>();
 
 
-            //traverse thru all the keys of the labelToSubtrees
+            //traverse thru all the keys of the la0belToSubtrees
             foreach (int label in LabelToSubtrees.Keys)
             {
+                if(label == 95)
+                {
+
+                }
+
                 //traverse thru its nodes
                 foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
                 {
@@ -300,15 +312,16 @@ namespace OSM_Connecitvity_Backend_Revised
                     foreach(string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
                     {
                         // if the way isnt a motorway or motorway link
-                        if(!(WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link")))
+                        if(!(WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway")))// || WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link")))
                         {
+                            // the outgoing nodes that make up a subgraph
                             HashSet<JunctionNode> set = LabelToOutgoingEndPoint.GetValueOrDefault(label, new HashSet<JunctionNode>());
 
                             // if oneWay = yes or oneWay = null ( we assume it is one way if it is null )
                             if(!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
                             {
-                                // we only add nodes that are outgoing from the graph
-                                if (WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id))
+                                // we only add nodes that are outgoing from the graph ( the   " or " condition takes care of special cases which are roundabouts
+                                if ((WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id) && !JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id).roadTypes.Contains("motorway_link")) || (WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id)))
                                 {
                                     set.Add(node);
                                     set.ExceptWith(incomingEnpointNodes);
@@ -321,7 +334,6 @@ namespace OSM_Connecitvity_Backend_Revised
                             {
                                 set.Add(node);
                                 LabelToOutgoingEndPoint[label] = set;
-                                
                             }
                             
                         }
@@ -332,23 +344,28 @@ namespace OSM_Connecitvity_Backend_Revised
                             incomingEnpointNodes.Add(JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id));
                         }
                     }
-
                 }
             }
 
-            BFSHelper(LabelToOutgoingEndPoint, incomingEnpointNodes);
+
+            List<List<JunctionNode>> AtoBpaths = BFSHelper(new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" },LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
+
+            int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" },LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
+     
+
+
+            
         }
 
-        //Here is where we run the BFS on the endpoint nodes of the graphs 
-        private void BFSHelper(Dictionary<int, HashSet<JunctionNode>> LabelToEndPointNodes, HashSet<JunctionNode> incomingEnpointNodes)
+        //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
+        private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes,int subtreeLabel)
         {
             List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
 
             //traverse thru its hashset
-            foreach (JunctionNode node in LabelToEndPointNodes.FirstOrDefault().Value)
+            foreach (JunctionNode node in LabelToOutgoingEndPoint.GetValueOrDefault(subtreeLabel))
             {
-
-                
 
                 Console.WriteLine("node: "+ node.Id);
 
@@ -365,13 +382,11 @@ namespace OSM_Connecitvity_Backend_Revised
 
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
-                    {
-                        
-
-                        if(!WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway") && !WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link"))
+                    {                       
+                        if(!subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                         {
                             //if we want to achieve connectivity only using trunk and trunklinks
-                            if (WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk") || WayHashMap.GetValueOrDefault(way).roadClass.Equals("trunk_link"))
+                            if (allowedPathRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                             {
                                 JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
                                 JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);                             
@@ -387,7 +402,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                             JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
 
                                             //if we reach the first node of another subtree
-                                            if (junctionNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (junctionNode.roadTypes.Contains("motorway") || junctionNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(junctionNode))
+                                            if (junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(junctionNode);
@@ -421,7 +436,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(endNode))
+                                            if (endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(endNode);
@@ -441,7 +456,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (startNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (startNode.roadTypes.Contains("motorway") || startNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(startNode))
+                                            if (startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(startNode);
@@ -458,7 +473,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label != LabelToEndPointNodes.FirstOrDefault().Key && (endNode.roadTypes.Contains("motorway") || endNode.roadTypes.Contains("motorway_link")) && incomingEnpointNodes.Contains(endNode))
+                                            if (endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(endNode);
@@ -480,8 +495,149 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
                 end_of_while_loop: { }
             }
-               
+            return pathsOfSubtree.OrderBy(a => a.Count).ToList();
         }
+
+        //Same as BFSHelper but we specify what subtree to hit, returns sorted list of shortest paths to target subtree
+        private List<List<JunctionNode>> BFSHelperWithTargetSubtree(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses, Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes, int subtreeLabel, int targetSubtreeLabel)
+        {
+            List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
+
+            //traverse thru its hashset
+            foreach (JunctionNode node in LabelToOutgoingEndPoint.GetValueOrDefault(subtreeLabel))
+            {
+
+                Console.WriteLine("node: " + node.Id);
+
+                //queue for the children nodes
+                Queue children = new Queue();
+                children.Enqueue(new List<JunctionNode>() { node });
+
+                HashSet<string> visitedNodes = new HashSet<string>();
+
+                while (children.Count != 0)
+                {
+                    List<JunctionNode> path = (List<JunctionNode>)children.Dequeue();
+                    JunctionNode currentNode = path.Last();
+
+                    //look thru all the ways this particular node is present in
+                    foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
+                    {
+                        if (!subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
+                        {
+                            //if we want to achieve connectivity only using trunk and trunklinks
+                            if (allowedPathRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
+                            {
+                                JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);
+
+                                //if we are at a roundabout
+                                if (startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                {
+                                    foreach (Node nd in WayHashMap.GetValueOrDefault(way).nodes)
+                                    {
+                                        //if one of the middle nodes of the intersection is connected to another way
+                                        if (nd.ways.Count > 1)
+                                        {
+                                            JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
+
+                                            //if we reach the first node of another subtree
+                                            if (junctionNode.label.Equals(targetSubtreeLabel) && junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(junctionNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(junctionNode);
+                                            children.Enqueue(new_path);
+
+                                        }
+                                    }
+
+                                }
+
+                                //if we aren't at a roundabout
+                                else
+                                {
+                                    // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
+                                    if (!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
+                                    {
+                                        // if it is one way, then we do not traverse from endnode to startnode because it would violate the oneWay direction
+                                        if (currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
+                                        {
+                                            continue;
+                                        }
+
+                                        // if the direction is respected (from startnode to endnode)
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (endNode.label.Equals(targetSubtreeLabel) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(endNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(endNode);
+                                            children.Enqueue(new_path);
+                                        }
+                                    }
+                                    // if oneway = no
+                                    else
+                                    {
+                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (startNode.label.Equals(targetSubtreeLabel) && startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(startNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(startNode);
+                                            children.Enqueue(new_path);
+                                        }
+
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        {
+                                            //if we reach the first node of another subtree
+                                            if (endNode.label.Equals(targetSubtreeLabel) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            {
+                                                Console.WriteLine(path.Count);
+                                                path.Add(endNode);
+                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
+                                                pathsOfSubtree.Add(path);
+                                                goto end_of_while_loop;
+                                            }
+                                            List<JunctionNode> new_path = new List<JunctionNode>();
+                                            new_path.AddRange(path);
+                                            new_path.Add(endNode);
+                                            children.Enqueue(new_path);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    visitedNodes.Add(currentNode.Id);
+                }
+            end_of_while_loop: { }
+            }
+            return pathsOfSubtree.OrderBy(a => a.Count).ToList();
+        }
+
 
         public void generateStronglyDisconnectedComponents()
         {
