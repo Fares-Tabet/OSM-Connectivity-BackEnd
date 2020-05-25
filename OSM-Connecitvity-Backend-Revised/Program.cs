@@ -7,15 +7,15 @@ namespace OSM_Connecitvity_Backend_Revised
     {
         static void Main(string[] args)
         {
-            FileParser parser = new FileParser("/Users/fares/Downloads/NZ_allRoads.xml");
-            parser.createDataFiles();
+           // FileParser parser = new FileParser("/Users/fares/Downloads/NZ_allRoads.xml");
+            //parser.createDataFiles();
 
 
-            FileProcessor fileProcessor = new FileProcessor();
+           FileProcessor fileProcessor = new FileProcessor();
 
             //fileProcessor.generateIncorrectMotorwayConnections("NZ_IncorrectConnections.json");
 
-            fileProcessor.generateDisconnectionsDataBFS( new List<string>() { "motorway", "motorway_link"}, "NZ_disconnections.json");
+           fileProcessor.generateDisconnectionsDataBFS( new List<string>() { "motorway","motorway_link"}, "NZ_disconnections.json");
             //fileProcessor.getWaysFromNodes();
         }
     }

@@ -63,8 +63,9 @@ namespace OSM_Connecitvity_Backend_Revised
                 {
                     Node node = NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value);
                     nodeList.Add(node);
+                    NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value).roadClasses.Add(way.roadClass);
                     NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value).ways.Add(way.Id);
-                    NodeDictionary.GetValueOrDefault(nd.FirstAttribute.Value).roadClass.Add(way.roadClass);
+                 
                 }
 
                 way.nodes = nodeList;

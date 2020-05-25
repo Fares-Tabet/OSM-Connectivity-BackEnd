@@ -247,9 +247,9 @@ namespace OSM_Connecitvity_Backend_Revised
                 LabelToSubtrees.Remove(label);
             }
 
-            connectSubGraphs2(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" });
+            connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" });
 
-            //-----------------------------Code to color code the sub graphs---------------------------//
+            //-------------------Code to color code the sub graphs starts below---------------------------//
 
 
             //Set of all disjoint graphs color coded 
@@ -284,10 +284,11 @@ namespace OSM_Connecitvity_Backend_Revised
             //write it to the file
             File.WriteAllText(fileName, JsonConvert.SerializeObject(DisjointedSubTreeWays.ToList()));
 
-            //generateStronglyDisconnectedComponents();
+            
         }
 
-        private void connectSubGraphs2(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees, List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses)
+
+        private void connectSubGraphs(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees, List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses)
         {
             Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint = new Dictionary<int, HashSet<JunctionNode>>();
 
@@ -302,9 +303,9 @@ namespace OSM_Connecitvity_Backend_Revised
                 HashSet<JunctionNode> set = LabelToOutgoingEndPoint.GetValueOrDefault(label, new HashSet<JunctionNode>());
 
                 //traverse thru its nodes
-                foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
+                foreach (JunctionNode nd in LabelToSubtrees.GetValueOrDefault(label))
                 {
-                   
+                    Node node = NodeDictionary.GetValueOrDefault(nd.Id);
                     // checking what road types is this node connected to from the NodeDictionary and not LabelTosubtree because we handle the 'T intersection' problem there
                     foreach (string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
                     {
@@ -316,19 +317,19 @@ namespace OSM_Connecitvity_Backend_Revised
                             {
 
                                 // if the node is an outgoing or incoming endpoint of the subgraph
-                                if (node.roadTypes.Intersect(subgraphRoadClasses).Any() && (node.roadTypes.Except(subgraphRoadClasses)).Except(new List<string>() { "motorway_link" }).Any())
+                                if (node.roadClasses.Intersect(subgraphRoadClasses).Any() && (node.roadClasses.Except(subgraphRoadClasses)).Except(new List<string>() { "motorway_link" }).Any())
                                 {
                                     //if it is an incoming node into the subgraph
                                     if(WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id))
                                     {
                                         //add to incoming nodes
-                                        incomingEnpointNodes.Add(node);
+                                        incomingEnpointNodes.Add(nd);
                                     }
                                     // if it is an outgoing node from the subgraph
                                     else if(WayHashMap.GetValueOrDefault(way).endNode.Id.Equals(node.Id))
                                     {
                                         //add it to outgoing nodes of that subgrapg
-                                        set.Add(node);
+                                        set.Add(nd);
                                         LabelToOutgoingEndPoint[label] = set;
                                     }
                                     
@@ -337,8 +338,8 @@ namespace OSM_Connecitvity_Backend_Revised
                             // if oneway = no
                             else
                             {
-                                incomingEnpointNodes.Add(node);
-                                set.Add(node);
+                                incomingEnpointNodes.Add(nd);
+                                set.Add(nd);
                                 LabelToOutgoingEndPoint[label] = set;
                             }
                         }
@@ -347,76 +348,19 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
-
             int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
             List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
 
+            HashSet<JunctionNode> sett = LabelToSubtrees.FirstOrDefault().Value.ToHashSet();
+            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(95)).ToHashSet();
+            sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
+            sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
+            sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+
+            generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
+
         }
-            //method to extract outgoing nodes from the subtree graphs
-        private void connectSubGraphs(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees)
-        {
-            Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint = new Dictionary<int, HashSet<JunctionNode>>();
 
-            //this hashet will contain the incoming endpoint nodes of all of the subgraphs
-            HashSet<JunctionNode> incomingEnpointNodes = new HashSet<JunctionNode>();
-
-
-            //traverse thru all the keys of the la0belToSubtrees
-            foreach (int label in LabelToSubtrees.Keys)
-            {
-                //traverse thru its nodes
-                foreach (JunctionNode node in LabelToSubtrees.GetValueOrDefault(label))
-                {
-
-                    // checking what road types is this node connected to from the NodeDictionary and not LabelTosubtree because we handle the 'T intersection' problem there
-                    foreach(string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
-                    {
-                        // if the way isnt a motorway or motorway link
-                        if(!(WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway")))// || WayHashMap.GetValueOrDefault(way).roadClass.Equals("motorway_link")))
-                        {
-                            // the outgoing nodes that make up a subgraph
-                            HashSet<JunctionNode> set = LabelToOutgoingEndPoint.GetValueOrDefault(label, new HashSet<JunctionNode>());
-
-                            // if oneWay = yes or oneWay = null ( we assume it is one way if it is null )
-                            if(!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
-                            {
-                                // we only add nodes that are outgoing from the graph ( the   " or " condition takes care of special cases which are roundabouts
-                                if ((WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id) && !JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id).roadTypes.Contains("motorway_link")) || (WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id)))
-                                {
-                                    set.Add(node);
-                                    set.ExceptWith(incomingEnpointNodes);
-                                    LabelToOutgoingEndPoint[label] = set;
-                                }
-
-                            }
-                            //If oneWay = no
-                            else
-                            {
-                                set.Add(node);
-                                LabelToOutgoingEndPoint[label] = set;
-                            }
-                            
-                        }
-                        // if the way is a motorway or motorway link, we add its incoming (start) node to a set that we use to subtract the incoming nodes of the subtree
-                        // from the LabelToOutgoingEndPoint
-                        else
-                        {
-                            incomingEnpointNodes.Add(JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id));
-                        }
-                    }
-                }
-            }
-
-
-            List<List<JunctionNode>> AtoBpaths = BFSHelper(new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" },LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
-
-            int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" },LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
-     
-
-
-            
-        }
 
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
         private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes,int subtreeLabel)
@@ -698,42 +642,89 @@ namespace OSM_Connecitvity_Backend_Revised
             return pathsOfSubtree.OrderBy(a => a.Count).ToList();
         }
 
-
-        public void generateStronglyDisconnectedComponents()
+        // kosaraju modified algorithm to check strongly connected components
+        private void generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
-            Dictionary<string, HashSet<Way>> colorToWaysSet = new Dictionary<string, HashSet<Way>>();
-            foreach(Way way in DisjointedSubTreeWays)
-            {
-                HashSet<Way> set = colorToWaysSet.GetValueOrDefault(way.colorCode, new HashSet<Way>());
-                set.Add(way);
-                colorToWaysSet[way.colorCode] = set;
-            }
-
-            HashSet<Way> ways = colorToWaysSet["#f50422"];
-
             //total vertices in a graph
-            int V = 30;
+            int V = graph.Count+1;
 
             nodeToVertex = new Dictionary<string, int>();
-
             Graph g = new Graph(V);
-            foreach(Way way in ways)
+
+            foreach(JunctionNode node in graph)
             {
-                int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id,nodeToVertex.Keys.Count+1);
-                if (vertix1 > nodeToVertex.Count)
-                    nodeToVertex.Add(way.startNode.Id, vertix1);
-
-                int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count+1);
-                if (vertix2 > nodeToVertex.Count)
-                    nodeToVertex.Add(way.endNode.Id, vertix2);
-
-                    g.addEdge(vertix1, vertix2);
-                
-                if (way.oneWay.Equals("no"))
+                foreach(string wayTemp in NodeDictionary.GetValueOrDefault(node.Id).ways)
                 {
-                    g.addEdge(vertix2, vertix1);
+                    Way way = WayHashMap.GetValueOrDefault(wayTemp);
+
+                   // we make sure that the way is part of the graph
+                   if(graphRoadTypes.Contains(way.roadClass) && graph.Contains(JunctionNodeHashMap.GetValueOrDefault(way.startNode.Id)) && graph.Contains(JunctionNodeHashMap.GetValueOrDefault(way.endNode.Id)))
+                   {
+                        //if its a roundabout
+                        if(way.startNode.Id.Equals(way.endNode.Id))
+                        {
+                            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
+                            if (vertix1 > nodeToVertex.Count)
+                            {
+                                nodeToVertex.Add(way.startNode.Id, vertix1);
+                            }
+                            int vertix2 = nodeToVertex.GetValueOrDefault(node.Id, nodeToVertex.Keys.Count + 1);
+                            if (vertix2 > nodeToVertex.Count)
+                            {
+                                nodeToVertex.Add(node.Id, vertix2);
+                            }
+
+                            g.addEdge(vertix1, vertix2);
+                            g.addEdge(vertix2, vertix1);
+                        }
+                        else
+                        {
+                            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
+                            if (vertix1 > nodeToVertex.Count)
+                                nodeToVertex.Add(way.startNode.Id, vertix1);
+
+                            int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count + 1);
+                            if (vertix2 > nodeToVertex.Count)
+                                nodeToVertex.Add(way.endNode.Id, vertix2);
+
+                            g.addEdge(vertix1, vertix2);
+
+                            if (way.oneWay.Equals("no"))
+                            {
+                                g.addEdge(vertix2, vertix1);
+                            }
+                        }
+                   }
                 }
             }
+
+
+            //foreach (JunctionNode node in graph)
+            //{
+            //    foreach(KeyValuePair<string,string> wayToNode in node.wayToNodeMap)
+            //    {
+            //        //if the way is part of the graph
+            //        if(graph.Contains(JunctionNodeHashMap.GetValueOrDefault(wayToNode.Value)))
+            //        {
+            //            Way way = WayHashMap.GetValueOrDefault(wayToNode.Key);
+            //            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
+            //            if (vertix1 > nodeToVertex.Count)
+            //                nodeToVertex.Add(way.startNode.Id, vertix1);
+
+            //            int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count + 1);
+            //            if (vertix2 > nodeToVertex.Count)
+            //                nodeToVertex.Add(way.endNode.Id, vertix2);
+
+            //            g.addEdge(vertix1, vertix2);
+
+            //            if (way.oneWay.Equals("no"))
+            //            {
+            //                g.addEdge(vertix2, vertix1);
+            //            }
+
+            //        }
+            //    }
+            //}
 
             // The main function that finds and prints all strongly 
             // connected components 

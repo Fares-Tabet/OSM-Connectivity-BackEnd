@@ -10,8 +10,8 @@ namespace OSM_Connecitvity_Backend_Revised
         public string Id { get; set; }
         public float Lat { get; set; }
         public float Lng { get; set; }
+        public List<string> roadClasses { get; set; }
         public List<string> ways { get; set; }
-        public List<string> roadClass { get; set; }
 
         public Node(string id, float lat, float lon)
         {
@@ -19,6 +19,7 @@ namespace OSM_Connecitvity_Backend_Revised
             this.Lat = lat;
             this.Lng = lon;
             this.ways = new List<string>();
+            this.roadClasses = new List<string>();
         }
 
 
