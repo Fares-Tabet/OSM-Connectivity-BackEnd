@@ -654,24 +654,21 @@ namespace OSM_Connecitvity_Backend_Revised
         // kosaraju modified algorithm to check strongly connected components
         private void generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
-
             GraphTarjan g = new GraphTarjan();
+
+            Dictionary<string, NodeTarjan> d = new Dictionary<string, NodeTarjan>();
 
             foreach(JunctionNode node in graph)
             {
                 NodeTarjan nd = new NodeTarjan(node.Id);
-                HashSet<NodeTarjan> set = new HashSet<NodeTarjan>();
-
-                //check if i already added the node to the set (which happens when we are at roundabouts)
-                NodeTarjan y = g.V.Where(w => w.N.Equals(node.Id)).FirstOrDefault();
-                if (y == null)
-                {
-                    g.V.Add(nd);
-
-                }else
-                {
-                    set = g.Adj.GetValueOrDefault(y);
-                }
+                g.V.Add(nd);
+                d.Add(node.Id, nd);
+                g.Adj[nd] = new HashSet<NodeTarjan>();
+            }
+                
+            foreach(JunctionNode node in graph)
+            {
+                HashSet<NodeTarjan> set = g.Adj.GetValueOrDefault(d.GetValueOrDefault(node.Id));
 
                 foreach (string wayTemp in NodeDictionary.GetValueOrDefault(node.Id).ways)
                 {
@@ -684,28 +681,14 @@ namespace OSM_Connecitvity_Backend_Revised
                         if(way.startNode.Id.Equals(way.endNode.Id))
                         {
                             //add the roundabout startnode to the adjacency list of current node
-                            NodeTarjan ndTemp = new NodeTarjan(way.startNode.Id);
-                            set.Add(ndTemp);
+                            set.Add(d.GetValueOrDefault(way.startNode.Id));
 
                             // Now i have to add current node to the adjacency list of the roundabout startnode (reverse edge)
-                            // but before doing that i check if it already exists as an entry in graph's V NodeTajran
-                            NodeTarjan x = g.V.Where(w => w.N.Equals(way.startNode.Id)).FirstOrDefault();
-                            //if the roundabout startnode doesnt exist, add it then append currentnode to its adj list
-                            if(x == null)
-                            {
-                                g.V.Add(ndTemp);
-                                g.Adj.Add(ndTemp, new HashSet<NodeTarjan>() { nd });
-                            }
-                            //if it exists, i just apend to its already existing adjc list
-                            else
-                            {
-                                HashSet<NodeTarjan> roundaboutSet = g.Adj.GetValueOrDefault(x);
-                                roundaboutSet.Add(ndTemp);
-                                //roundaboutSet.RemoveWhere(x => x.N.Equals(ndTemp.N));
-                                g.Adj[x] = roundaboutSet;
-                            }
-                            
-
+                            // but before doing that i check if it already exists as an entry in graph's V NodeTarjan
+                            HashSet<NodeTarjan> roundaboutSet = g.Adj.GetValueOrDefault(d.GetValueOrDefault(way.startNode.Id));
+                            roundaboutSet.Add(d.GetValueOrDefault(node.Id));
+                            g.Adj[d.GetValueOrDefault(way.startNode.Id)] = roundaboutSet;
+                           
                         }
                         else
                         {
@@ -714,10 +697,8 @@ namespace OSM_Connecitvity_Backend_Revised
                             {
                                 if (node.Id.Equals(way.startNode.Id))
                                 {
-                                    NodeTarjan ndTemp = new NodeTarjan(way.endNode.Id);
-                                    set.Add(ndTemp);
-                                }
-                                   
+                                    set.Add(d.GetValueOrDefault(way.endNode.Id));
+                                }  
                             }
                             //if oneWay = no
                             else
@@ -725,12 +706,11 @@ namespace OSM_Connecitvity_Backend_Revised
                                 //if my current node is 
                                 if(way.startNode.Id.Equals(node.Id))
                                 {
-                                    NodeTarjan ndTemp = new NodeTarjan(way.endNode.Id);
-                                    set.Add(ndTemp);
-                                }else
+                                    set.Add(d.GetValueOrDefault(way.endNode.Id));
+                                }
+                                else
                                 {
-                                    NodeTarjan ndTemp = new NodeTarjan(way.startNode.Id);
-                                    set.Add(ndTemp);
+                                    set.Add(d.GetValueOrDefault(way.startNode.Id));
                                 }
                             }
                         }
@@ -738,7 +718,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
 
                 //add the adjacency list
-                g.Adj.Add(nd, set);
+                g.Adj[d.GetValueOrDefault(node.Id)] = set;
             }
 
             //run the algorithm
