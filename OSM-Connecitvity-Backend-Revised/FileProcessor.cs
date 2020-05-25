@@ -351,11 +351,13 @@ namespace OSM_Connecitvity_Backend_Revised
             int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
             List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
 
-            HashSet<JunctionNode> sett = LabelToSubtrees.FirstOrDefault().Value.ToHashSet();
+            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(33).ToHashSet();
             sett = sett.Union(LabelToSubtrees.GetValueOrDefault(95)).ToHashSet();
+            sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+            
             sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
             sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
-            sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+
 
             generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
 
@@ -409,13 +411,17 @@ namespace OSM_Connecitvity_Backend_Revised
                                             if (junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 Console.WriteLine(path.Count);
+                                                path.Add(startNode);
+
                                                 path.Add(junctionNode);
                                                 //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
+
                                             List<JunctionNode> new_path = new List<JunctionNode>();
                                             new_path.AddRange(path);
+                                            new_path.Add(startNode);
                                             new_path.Add(junctionNode);
                                             children.Enqueue(new_path);
                                             
@@ -549,13 +555,16 @@ namespace OSM_Connecitvity_Backend_Revised
                                             if (junctionNode.label.Equals(targetSubtreeLabel) && junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 Console.WriteLine(path.Count);
+                                                path.Add(startNode);
                                                 path.Add(junctionNode);
+                                               
                                                 //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
                                             List<JunctionNode> new_path = new List<JunctionNode>();
                                             new_path.AddRange(path);
+                                            new_path.Add(startNode);
                                             new_path.Add(junctionNode);
                                             children.Enqueue(new_path);
 
@@ -645,15 +654,26 @@ namespace OSM_Connecitvity_Backend_Revised
         // kosaraju modified algorithm to check strongly connected components
         private void generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
-            //total vertices in a graph
-            int V = graph.Count+1;
 
-            nodeToVertex = new Dictionary<string, int>();
-            Graph g = new Graph(V);
+            GraphTarjan g = new GraphTarjan();
 
             foreach(JunctionNode node in graph)
             {
-                foreach(string wayTemp in NodeDictionary.GetValueOrDefault(node.Id).ways)
+                NodeTarjan nd = new NodeTarjan(node.Id);
+                HashSet<NodeTarjan> set = new HashSet<NodeTarjan>();
+
+                //check if i already added the node to the set (which happens when we are at roundabouts)
+                NodeTarjan y = g.V.Where(w => w.N.Equals(node.Id)).FirstOrDefault();
+                if (y == null)
+                {
+                    g.V.Add(nd);
+
+                }else
+                {
+                    set = g.Adj.GetValueOrDefault(y);
+                }
+
+                foreach (string wayTemp in NodeDictionary.GetValueOrDefault(node.Id).ways)
                 {
                     Way way = WayHashMap.GetValueOrDefault(wayTemp);
 
@@ -663,105 +683,66 @@ namespace OSM_Connecitvity_Backend_Revised
                         //if its a roundabout
                         if(way.startNode.Id.Equals(way.endNode.Id))
                         {
-                            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
-                            if (vertix1 > nodeToVertex.Count)
-                            {
-                                nodeToVertex.Add(way.startNode.Id, vertix1);
-                            }
-                            int vertix2 = nodeToVertex.GetValueOrDefault(node.Id, nodeToVertex.Keys.Count + 1);
-                            if (vertix2 > nodeToVertex.Count)
-                            {
-                                nodeToVertex.Add(node.Id, vertix2);
-                            }
+                            //add the roundabout startnode to the adjacency list of current node
+                            NodeTarjan ndTemp = new NodeTarjan(way.startNode.Id);
+                            set.Add(ndTemp);
 
-                            g.addEdge(vertix1, vertix2);
-                            g.addEdge(vertix2, vertix1);
+                            // Now i have to add current node to the adjacency list of the roundabout startnode (reverse edge)
+                            // but before doing that i check if it already exists as an entry in graph's V NodeTajran
+                            NodeTarjan x = g.V.Where(w => w.N.Equals(way.startNode.Id)).FirstOrDefault();
+                            //if the roundabout startnode doesnt exist, add it then append currentnode to its adj list
+                            if(x == null)
+                            {
+                                g.V.Add(ndTemp);
+                                g.Adj.Add(ndTemp, new HashSet<NodeTarjan>() { nd });
+                            }
+                            //if it exists, i just apend to its already existing adjc list
+                            else
+                            {
+                                HashSet<NodeTarjan> roundaboutSet = g.Adj.GetValueOrDefault(x);
+                                roundaboutSet.Add(ndTemp);
+                                //roundaboutSet.RemoveWhere(x => x.N.Equals(ndTemp.N));
+                                g.Adj[x] = roundaboutSet;
+                            }
+                            
+
                         }
                         else
                         {
-                            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
-                            if (vertix1 > nodeToVertex.Count)
-                                nodeToVertex.Add(way.startNode.Id, vertix1);
-
-                            int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count + 1);
-                            if (vertix2 > nodeToVertex.Count)
-                                nodeToVertex.Add(way.endNode.Id, vertix2);
-
-                            g.addEdge(vertix1, vertix2);
-
-                            if (way.oneWay.Equals("no"))
+                            // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
+                            if (!way.oneWay.Equals("no")) 
                             {
-                                g.addEdge(vertix2, vertix1);
+                                if (node.Id.Equals(way.startNode.Id))
+                                {
+                                    NodeTarjan ndTemp = new NodeTarjan(way.endNode.Id);
+                                    set.Add(ndTemp);
+                                }
+                                   
+                            }
+                            //if oneWay = no
+                            else
+                            {
+                                //if my current node is 
+                                if(way.startNode.Id.Equals(node.Id))
+                                {
+                                    NodeTarjan ndTemp = new NodeTarjan(way.endNode.Id);
+                                    set.Add(ndTemp);
+                                }else
+                                {
+                                    NodeTarjan ndTemp = new NodeTarjan(way.startNode.Id);
+                                    set.Add(ndTemp);
+                                }
                             }
                         }
                    }
                 }
+
+                //add the adjacency list
+                g.Adj.Add(nd, set);
             }
 
-
-            //foreach (JunctionNode node in graph)
-            //{
-            //    foreach(KeyValuePair<string,string> wayToNode in node.wayToNodeMap)
-            //    {
-            //        //if the way is part of the graph
-            //        if(graph.Contains(JunctionNodeHashMap.GetValueOrDefault(wayToNode.Value)))
-            //        {
-            //            Way way = WayHashMap.GetValueOrDefault(wayToNode.Key);
-            //            int vertix1 = nodeToVertex.GetValueOrDefault(way.startNode.Id, nodeToVertex.Keys.Count + 1);
-            //            if (vertix1 > nodeToVertex.Count)
-            //                nodeToVertex.Add(way.startNode.Id, vertix1);
-
-            //            int vertix2 = nodeToVertex.GetValueOrDefault(way.endNode.Id, nodeToVertex.Keys.Count + 1);
-            //            if (vertix2 > nodeToVertex.Count)
-            //                nodeToVertex.Add(way.endNode.Id, vertix2);
-
-            //            g.addEdge(vertix1, vertix2);
-
-            //            if (way.oneWay.Equals("no"))
-            //            {
-            //                g.addEdge(vertix2, vertix1);
-            //            }
-
-            //        }
-            //    }
-            //}
-
-            // The main function that finds and prints all strongly 
-            // connected components 
-
-            Stack stack = new Stack();
-
-            // Mark all the vertices as not visited (For first DFS) 
-            bool[] visited = new bool[V];
-            for (int i = 0; i < V; i++)
-                visited[i] = false;
-
-            // Fill vertices in stack according to their finishing 
-            // times 
-            for (int i = 0; i < V; i++)
-                if (visited[i] == false)
-                    g.fillOrder(i, visited, stack);
-
-            // Create a reversed graph 
-            Graph gr = g.getTranspose();
-
-            // Mark all the vertices as not visited (For second DFS) 
-            for (int i = 0; i < V; i++)
-                visited[i] = false;
-
-            // Now process all vertices in order defined by Stack 
-            while (stack.Count != 0)
-            {
-                // Pop a vertex from stack 
-                int v = (int)stack.Pop();
-
-                // Print Strongly connected component of the popped vertex 
-                if (visited[v] == false)
-                {
-                        gr.DFSUtil(v, visited);
-                    Console.WriteLine("\n");
-                }
-            }
+            //run the algorithm
+            g.Tarjan();
         }
 
         //This method generates a file to draw the road network of the specified classifications in the list parameter

@@ -52,3 +52,4 @@ C:/Users/Fares/Documents/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backen
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.pdb
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.genruntimeconfig.cache
 /Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/obj/Debug/netcoreapp3.0/OSM-Connecitvity-Backend-Revised.csprojAssemblyReference.cache
+/Users/fares/Documents/Coding/GitHub/OSM-Connectivity-BackEnd/OSM-Connecitvity-Backend-Revised/bin/Debug/netcoreapp3.0/Nito.Collections.Deque.dll
