@@ -11,6 +11,7 @@ namespace OSM_Connecitvity_Backend_Revised
         public float Lat { get; set; }
         public float Lng { get; set; }
         public List<string> ways { get; set; }
+        public List<string> roadClass { get; set; }
 
         public Node(string id, float lat, float lon)
         {
