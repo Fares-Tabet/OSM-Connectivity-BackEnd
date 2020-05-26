@@ -25,17 +25,19 @@ namespace OSM_Connecitvity_Backend_Revised
 	{
 		public HashSet<NodeTarjan> V { get; set; }
 		public Dictionary<NodeTarjan, HashSet<NodeTarjan>> Adj { get; set; }
+		public List<List<string>> SCCresult { get; set; }
 
         public GraphTarjan()
         {
 			this.V = new HashSet<NodeTarjan>();
 			this.Adj = new Dictionary<NodeTarjan, HashSet<NodeTarjan>>();
+			this.SCCresult = new List<List<string>>();
         }
 
 		/// <summary>
 		/// Tarjan's strongly connected components algorithm
 		/// </summary>
-		public void Tarjan()
+		public List<List<string>> Tarjan()
 		{
 			var index = 0; // number of nodes
 			var S = new Stack<NodeTarjan>();
@@ -66,21 +68,27 @@ namespace OSM_Connecitvity_Backend_Revised
 				if (v.LowLink == v.Index)
 				{
 					Console.Write("SCC: ");
+					List<string> list = new List<string>();
 
 					NodeTarjan w;
 					do
 					{
 						w = S.Pop();
 						Console.Write(w.N + " ");
+						list.Add(w.N);
 					} while (w != v);
 
 					Console.WriteLine();
+					SCCresult.Add(list);
 				}
 			};
 
 			foreach (var v in V)
 				if (v.Index < 0)
 					StrongConnect(v);
+
+
+			return SCCresult;
 		}
 	}
 }

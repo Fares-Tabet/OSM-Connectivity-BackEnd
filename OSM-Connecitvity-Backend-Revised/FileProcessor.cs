@@ -347,19 +347,29 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
             }
 
-            List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
-            int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
+            //List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
+            //int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+            //List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
 
-            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(33).ToHashSet();
-            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(95)).ToHashSet();
-            sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
-            
+            //HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(33).ToHashSet();
+            //sett = sett.Union(LabelToSubtrees.GetValueOrDefault(95)).ToHashSet();
+            //sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+
+            //sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
+            //sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
+
+            List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, 136);
+            int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, 135, 136);
+
+            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(136).ToHashSet();
+            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(135)).ToHashSet();
+            sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+
             sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
             sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
 
-
-            generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
+            List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
 
         }
 
@@ -652,7 +662,7 @@ namespace OSM_Connecitvity_Backend_Revised
         }
 
         // kosaraju modified algorithm to check strongly connected components
-        private void generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
+        private List<List<string>> generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
             GraphTarjan g = new GraphTarjan();
 
@@ -722,7 +732,8 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             //run the algorithm
-            g.Tarjan();
+            return g.Tarjan();
+            
         }
 
         //This method generates a file to draw the road network of the specified classifications in the list parameter

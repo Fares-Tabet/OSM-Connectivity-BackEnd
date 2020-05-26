@@ -18,37 +18,10 @@ namespace OSM_Connecitvity_Backend_Revised
             fileProcessor.generateDisconnectionsDataBFS( new List<string>() { "motorway","motorway_link"}, "NZ_disconnections.json");
             //fileProcessor.getWaysFromNodes();
 
-            //GraphTarjan g = new GraphTarjan();
-            //NodeTarjan node0 = new NodeTarjan(0 + "");
-            //NodeTarjan node1 = new NodeTarjan(1 + "");
-            //NodeTarjan node2 = new NodeTarjan(2 + "");
-            //NodeTarjan node3 = new NodeTarjan(3234213 + "");
-            //NodeTarjan node4 = new NodeTarjan(4 + "");
-            //NodeTarjan node5 = new NodeTarjan(5 + "");
-            //NodeTarjan node6 = new NodeTarjan(6 + "");
-            //NodeTarjan node7 = new NodeTarjan(7123432 + "");
+            string x = "3029123087 6138484213 3029123116 3029123069 947891767 947891928 2915526575 2915526590 2915526581 4846868447 4464231993 4846868471 4846868470 2915526593 2915527214 4464231988 4464231978 4464229417 4711111451 4464229409 4464229430 4711121985 4711121984 4691997458 4691997443 4566484301 2915567602 722121199 6027069395 2915567563 4691997480 4691997460 4711129190 4711129191 2915567504 2915565892 4711111442 4711111441 4464231981 4464231979 2915526562 2915526576 4846868457 4846868453 4464231987 4464231986 4469562794 4469562796 4469562793 3029122823 200752179 3029123107";
+            Console.WriteLine("total nodes " + x.Split(" ").Length.ToString());
 
-            //g.V.Add(node0);
-            //g.V.Add(node1);
-            //g.V.Add(node2);
-            //g.V.Add(node3);
-            //g.V.Add(node4);
-            //g.V.Add(node5);
-            ////g.V.Add(node6);
-            //g.V.Add(node7);
-
-
-
-            //g.Adj.Add(node0, new HashSet<NodeTarjan>() { node1 });
-            //g.Adj.Add(node1, new HashSet<NodeTarjan>() { node2 });
-            //g.Adj.Add(node2, new HashSet<NodeTarjan>() { node0 });
-            //g.Adj.Add(node3, new HashSet<NodeTarjan>() { node4, node7 });
-            //g.Adj.Add(node4, new HashSet<NodeTarjan>() { node5 });
-            //g.Adj.Add(node5, new HashSet<NodeTarjan>() { node0, node6 });
-            //g.Adj.Add(node6, new HashSet<NodeTarjan>() { node2, node0, node4 });
-            //g.Adj.Add(node7, new HashSet<NodeTarjan>() { node3 });
-
-            //g.Tarjan();
+            
 
         }
     }
