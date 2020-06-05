@@ -17,7 +17,7 @@ namespace OSM_Connecitvity_Backend_Revised
         public string colorCode { get; set; }
         public Way()
         {
-
+            this.nodes = new List<Node>();
         }
         public Way(string Id, string roadClass, Node endNode, Node startNode, List<Node> nodes)
         {

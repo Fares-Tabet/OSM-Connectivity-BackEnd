@@ -26,6 +26,8 @@ namespace OSM_Connecitvity_Backend_Revised
 
         public JunctionNode()
         {
+            this.roadTypes = new List<string>();
+            this.wayToNodeMap = new Dictionary<string, string>();
         }
     }
 }

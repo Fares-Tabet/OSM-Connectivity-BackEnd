@@ -305,9 +305,9 @@ namespace OSM_Connecitvity_Backend_Revised
                 //traverse thru its nodes
                 foreach (JunctionNode nd in LabelToSubtrees.GetValueOrDefault(label))
                 {
-                    Node node = NodeDictionary.GetValueOrDefault(nd.Id);
+                    //Node node = NodeDictionary.GetValueOrDefault(nd.Id);
                     // checking what road types is this node connected to from the NodeDictionary and not LabelTosubtree because we handle the 'T intersection' problem there
-                    foreach (string way in NodeDictionary.GetValueOrDefault(node.Id).ways)
+                    foreach (string way in nd.wayToNodeMap.Keys)
                     {
                         // if we are at a road class that the subtree is out made of
                         if(subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
@@ -317,16 +317,16 @@ namespace OSM_Connecitvity_Backend_Revised
                             {
 
                                 // if the node is an outgoing or incoming endpoint of the subgraph
-                                if (node.roadClasses.Intersect(subgraphRoadClasses).Any() && (node.roadClasses.Except(subgraphRoadClasses)).Except(new List<string>() { "motorway_link" }).Any())
+                                if (nd.roadTypes.Intersect(subgraphRoadClasses).Any() && (nd.roadTypes.Intersect(allowedPathRoadClasses).Any()))//.Except(new List<string>() { "motorway_link" })).Any()))
                                 {
                                     //if it is an incoming node into the subgraph
-                                    if(WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(node.Id))
+                                    if(WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(nd.Id))
                                     {
                                         //add to incoming nodes
                                         incomingEnpointNodes.Add(nd);
                                     }
                                     // if it is an outgoing node from the subgraph
-                                    else if(WayHashMap.GetValueOrDefault(way).endNode.Id.Equals(node.Id))
+                                    else if(WayHashMap.GetValueOrDefault(way).endNode.Id.Equals(nd.Id))
                                     {
                                         //add it to outgoing nodes of that subgrapg
                                         set.Add(nd);
@@ -357,10 +357,10 @@ namespace OSM_Connecitvity_Backend_Revised
 
             //sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
             //sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
-
-            List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, 136);
+            int sourcelabel = 2;
+            List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel);
             int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, 135, 136);
+            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, sourcelabel);
 
             HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(136).ToHashSet();
             sett = sett.Union(LabelToSubtrees.GetValueOrDefault(135)).ToHashSet();
