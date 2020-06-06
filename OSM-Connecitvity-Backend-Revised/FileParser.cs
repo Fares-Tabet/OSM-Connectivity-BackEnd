@@ -241,17 +241,20 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             //update the way ids in the junction node hashmap
-            foreach(Way way in addedWays)
+            foreach (Way way in addedWays)
             {
                 //update the start junction node value
                 JunctionNode junctionNode = junctionNodeDictionary.GetValueOrDefault(way.startNode.Id);
 
-                if (way.startNode.Id.Equals("1696912082"))
-                {
 
-                }
+
                 if (junctionNode != null)
                 {
+                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id))
+                    {
+                        junctionNode.roadTypes.Remove(wayDictionary.GetValueOrDefault(way.Id).roadClass);
+                    }
+                    junctionNode.roadTypes.Add(way.roadClass);
                     junctionNode.wayToNodeMap.Remove(way.Id.Substring(0, way.Id.Length - 1));
                     junctionNode.wayToNodeMap[way.Id] = way.endNode.Id;
                     junctionNodeDictionary[way.startNode.Id] = junctionNode;
@@ -264,18 +267,24 @@ namespace OSM_Connecitvity_Backend_Revised
                     junctionNode.Lng = way.startNode.Lng;
                     junctionNode.roadTypes.Add(way.roadClass);
                     junctionNode.wayToNodeMap.Add(way.Id, way.endNode.Id);
-                    junctionNodeDictionary.Add(junctionNode.Id,junctionNode);
+                    junctionNodeDictionary.Add(junctionNode.Id, junctionNode);
+
+
 
                 }
+
+
 
                 //update the end junction node value
                 junctionNode = junctionNodeDictionary.GetValueOrDefault(way.endNode.Id);
-                if (way.endNode.Id.Equals("1696912082"))
-                {
 
-                }
                 if (junctionNode != null)
                 {
+                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id))
+                    {
+                        junctionNode.roadTypes.Remove(wayDictionary.GetValueOrDefault(way.Id).roadClass);
+                    }
+                    junctionNode.roadTypes.Add(way.roadClass);
                     junctionNode.wayToNodeMap.Remove(way.Id.Substring(0, way.Id.Length - 1));
                     junctionNode.wayToNodeMap[way.Id] = way.startNode.Id;
                     junctionNodeDictionary[way.endNode.Id] = junctionNode;
@@ -288,8 +297,10 @@ namespace OSM_Connecitvity_Backend_Revised
                     junctionNode.Lng = way.endNode.Lng;
                     junctionNode.roadTypes.Add(way.roadClass);
                     junctionNode.wayToNodeMap.Add(way.Id, way.startNode.Id);
-                    junctionNodeDictionary.Add(junctionNode.Id,junctionNode);
+                    junctionNodeDictionary.Add(junctionNode.Id, junctionNode);
                 }
+
+
 
                 //make changes in the roadclasses and way list of the nodes in the node dictionary
                 foreach (Node node in way.nodes)

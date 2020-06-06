@@ -357,38 +357,89 @@ namespace OSM_Connecitvity_Backend_Revised
 
 
 
-            //-------------------------------------- BELOW IS WHERE THE ULTRON ALGORITHM STARTS -------------------------------------------
+            //-------------------------------------- BELOW IS WHERE THE BIG BOI ALGORITHM STARTS -------------------------------------------
 
-            int sourcelabel = 12;
-            List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel);
-            int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-            List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, sourcelabel);
+            //int sourcelabel = 5;
+            //List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel);
+            //int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+            //List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel, targetLabel);
 
             
-            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(12).ToHashSet();
-            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(6)).ToHashSet();
-            sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+            //HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(sourcelabel).ToHashSet();
+            //sett = sett.Union(LabelToSubtrees.GetValueOrDefault(targetLabel)).ToHashSet();
+            //sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
 
-            sett = sett.Union(AtoBpaths.SelectMany(x=> x).ToHashSet()).ToHashSet();
-            sett = sett.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
+            //sett = sett.Union(AtoBpaths.SelectMany(x=> x).ToHashSet()).ToHashSet();
+            //sett = sett.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
 
-            //While debbuging; Its normal if the number of nodes is less than the one in labelToSubtrees because we are removing motorway links
-            List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
+            ////While debbuging; Its normal if the number of nodes is less than the one in labelToSubtrees because we are removing motorway links
+            //List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
+
+
+
+            // Create the main graph and the aggregate label list of that graph
+            HashSet<JunctionNode> currentGraph = new HashSet<JunctionNode>();           
+            List<int> currentGraphAggregateLabels =  new List<int>();
+
+            //Assign the first graph to the main graph and add its key to the aggregate list
+            currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
+            currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);
+
+            //remove the current graph from labelToOutgoing 
+            int currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
+            LabelToOutgoingEndPoint.Remove(currentGraphLabel);
+
+            while (LabelToOutgoingEndPoint.Count != 0)
+            {
+                //go from currentGraph to the closes graph it finds, and the other way around
+                List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, currentGraph, incomingEnpointNodes, currentGraphAggregateLabels);
+
+                //if currentgraph is able to connect to a neiboring subgraph
+                if (AtoBpaths.Count > 0)
+                {
+                    int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+                    List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, currentGraphAggregateLabels, targetLabel);
+
+                    //Unioning AtoB path, BtoA path and target graph to the current graph
+                    currentGraph = currentGraph.Union(AtoBpaths.SelectMany(x => x).ToHashSet()).ToHashSet();
+                    currentGraph = currentGraph.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
+                    HashSet<JunctionNode> targetGraph = LabelToOutgoingEndPoint.GetValueOrDefault(targetLabel);
+                    currentGraph.Union(targetGraph);
+
+                    //removing the target graph label and adding it to the currentGraphAggregateLabels
+                    LabelToOutgoingEndPoint.Remove(targetLabel);
+                    currentGraphAggregateLabels.Add(targetLabel);
+                }
+                //if we cannot reach any unvisisted subgraph (if we visited everything in current island)
+                else
+                {
+                    //Assign the first graph to the main graph and add its key to the aggregate list
+                    currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
+                    currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);
+
+                    //remove the current graph from labelToOutgoing 
+                    currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
+                    LabelToOutgoingEndPoint.Remove(currentGraphLabel);
+                }
+
+
+            }
+
 
         }
         
         public List<string> motorwayMotorwayLink = new List<string>{ "motorway", "motorway_link" };
 
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
-        private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes,int subtreeLabel)
+        private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,HashSet<JunctionNode> sourceGraph, HashSet<JunctionNode> incomingEnpointNodes,List<int> subtreeLabels)
         {
             List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
 
             //traverse thru its hashset
-            foreach (JunctionNode node in LabelToOutgoingEndPoint.GetValueOrDefault(subtreeLabel))
+            foreach (JunctionNode node in sourceGraph)
             {
 
-                Console.WriteLine("node: "+ node.Id);
+                //Console.WriteLine("node: "+ node.Id);
 
                 //queue for the children nodes
                 Queue children = new Queue();
@@ -404,10 +455,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                     {
-                        if(way.Equals("140819368"))
-                        {
-
-                        }
+                     
 
                         if(!subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                         {
@@ -428,7 +476,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                             JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
 
                                             //if we reach the first node of another subtree
-                                            if (junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
+                                            if (!subtreeLabels.Contains(junctionNode.label) && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(startNode);
@@ -467,11 +515,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            if (!subtreeLabels.Contains(endNode.label) && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(endNode);
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -487,11 +533,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
+                                            if (!subtreeLabels.Contains(startNode.label) && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(startNode);
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -504,11 +548,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            if (!subtreeLabels.Contains(endNode.label) && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(endNode);
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -530,7 +572,7 @@ namespace OSM_Connecitvity_Backend_Revised
         }
 
         //Same as BFSHelper but we specify what subtree to hit, returns sorted list of shortest paths to target subtree
-        private List<List<JunctionNode>> BFSHelperWithTargetSubtree(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses, Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes, int subtreeLabel, int targetSubtreeLabel)
+        private List<List<JunctionNode>> BFSHelperWithTargetSubtree(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses, Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes, List<int> targetGraphLabels, int  subtreeLabel)
         {
             List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
 
@@ -538,7 +580,7 @@ namespace OSM_Connecitvity_Backend_Revised
             foreach (JunctionNode node in LabelToOutgoingEndPoint.GetValueOrDefault(subtreeLabel))
             {
 
-                Console.WriteLine("node: " + node.Id);
+                //Console.WriteLine("node: " + node.Id);
 
                 //queue for the children nodes
                 Queue children = new Queue();
@@ -573,13 +615,11 @@ namespace OSM_Connecitvity_Backend_Revised
                                             JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
 
                                             //if we reach the first node of another subtree
-                                            if (junctionNode.label.Equals(targetSubtreeLabel) && junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
+                                            if (targetGraphLabels.Contains(junctionNode.label) && junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(startNode);
                                                 path.Add(junctionNode);
                                                
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -610,11 +650,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label.Equals(targetSubtreeLabel) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            if (targetGraphLabels.Contains(endNode.label) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(endNode);
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -630,11 +668,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (startNode.label.Equals(targetSubtreeLabel) && startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
+                                            if (targetGraphLabels.Contains(startNode.label) && startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
                                             {
-                                                Console.WriteLine(path.Count);
                                                 path.Add(startNode);
-                                                //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -647,7 +683,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
                                         {
                                             //if we reach the first node of another subtree
-                                            if (endNode.label.Equals(targetSubtreeLabel) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
+                                            if (targetGraphLabels.Contains(endNode.label) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(endNode);
@@ -688,7 +724,7 @@ namespace OSM_Connecitvity_Backend_Revised
             }
                 
             foreach(JunctionNode node in graph)
-            {
+            {         
                 HashSet<NodeTarjan> set = g.Adj.GetValueOrDefault(d.GetValueOrDefault(node.Id));
 
                 foreach (string wayTemp in NodeDictionary.GetValueOrDefault(node.Id).ways)
@@ -741,6 +777,16 @@ namespace OSM_Connecitvity_Backend_Revised
                 //add the adjacency list
                 g.Adj[d.GetValueOrDefault(node.Id)] = set;
             }
+
+
+            //foreach (KeyValuePair<NodeTarjan,HashSet<NodeTarjan>> tarzan in g.Adj)
+            //{
+            //    Console.WriteLine(tarzan.Key.N + " " + tarzan.Value.Count);
+            //    if(tarzan.Key.N.Equals("3318019879") || tarzan.Key.N.Equals("2097666539"))
+            //    {
+
+            //    }
+            //}
 
             //run the algorithm
             return g.Tarjan();

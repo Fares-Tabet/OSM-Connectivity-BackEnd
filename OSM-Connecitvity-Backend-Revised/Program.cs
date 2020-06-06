@@ -8,7 +8,7 @@ namespace OSM_Connecitvity_Backend_Revised
         static void Main(string[] args)
         {
              //FileParser parser = new FileParser("NZ_allRoads_latest.xml");
-             //parser.createDataFiles();
+            //parser.createDataFiles();
 
 
             FileProcessor fileProcessor = new FileProcessor();
@@ -16,7 +16,7 @@ namespace OSM_Connecitvity_Backend_Revised
             //fileProcessor.generateIncorrectMotorwayConnections("NZ_IncorrectConnections.json");
 
             fileProcessor.generateDisconnectionsDataBFS( new List<string>() { "motorway","motorway_link"}, "NZ_disconnections.json");
-            fileProcessor.getWaysFromNodes();
+            //fileProcessor.getWaysFromNodes();
 
         }
     }
