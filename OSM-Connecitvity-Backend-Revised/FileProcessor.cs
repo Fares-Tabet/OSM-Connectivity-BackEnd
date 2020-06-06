@@ -26,8 +26,8 @@ namespace OSM_Connecitvity_Backend_Revised
         HashSet<Way> DisjointedSubTreeWays;
 
         public Dictionary<string, int> nodeToVertex { get; set; }
-    //distinct color codes for allocating them to different subgraphs
-    static string[] ColorValues = new string[] {
+        //distinct color codes for allocating them to different subgraphs
+        static string[] ColorValues = new string[] {
 
 "#63b598", "#ce7d78", "#ea9e70", "#a48a9e", "#c6e1e8", "#648177", "#0d5ac1", "#f205e6", "#1c0365", "#14a9ad", "#4ca2f9", "#a4e43f", "#d298e2", "#6119d0",
 "#d2737d", "#c0a43c", "#f2510e", "#651be6", "#79806e", "#61da5e", "#cd2f00","#9348af", "#01ac53", "#c5a4fb", "#996635", "#b11573", "#4bb473", "#75d89e",
@@ -65,7 +65,7 @@ namespace OSM_Connecitvity_Backend_Revised
 
         public FileProcessor()
         {
-            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string,Node>>(File.ReadAllText(@"NodeDictionary.json"));
+            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"NodeDictionary.json"));
             WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
             JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
         }
@@ -79,15 +79,15 @@ namespace OSM_Connecitvity_Backend_Revised
             Dictionary<string, JunctionNode> pathDictionary = new Dictionary<string, JunctionNode>();
             foreach (JunctionNode node in set)
             {
-                pathDictionary.Add(node.Id,node);
+                pathDictionary.Add(node.Id, node);
             }
 
-            foreach(KeyValuePair<string,JunctionNode> pair in pathDictionary)
+            foreach (KeyValuePair<string, JunctionNode> pair in pathDictionary)
             {
-                foreach(KeyValuePair<string,string> node in pair.Value.wayToNodeMap)
+                foreach (KeyValuePair<string, string> node in pair.Value.wayToNodeMap)
                 {
                     if (pathDictionary.ContainsKey(node.Value) && (
-                            WayHashMap.GetValueOrDefault(node.Key).roadClass.Equals("trunk")||
+                            WayHashMap.GetValueOrDefault(node.Key).roadClass.Equals("trunk") ||
                             WayHashMap.GetValueOrDefault(node.Key).roadClass.Equals("trunk_link")))
                     {
                         ways.Add(WayHashMap.GetValueOrDefault(node.Key));
@@ -100,32 +100,32 @@ namespace OSM_Connecitvity_Backend_Revised
 
         //finding incorrect highway = motorway connections
         public void generateIncorrectMotorwayConnections(string fileName)
-		{
+        {
             List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
 
             //for each junction node
             foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
-			{   //if it is connected to a motorway 
-				if (node.Value.roadTypes.Contains("motorway"))
-				{
+            {   //if it is connected to a motorway 
+                if (node.Value.roadTypes.Contains("motorway"))
+                {
                     int res = (from x in node.Value.roadTypes
                                select x).Distinct().Count();
-					if ((res >= 3) || (res==2 && !node.Value.roadTypes.Contains("motorway_link")) || (res==1 && node.Value.roadTypes.Count==1))
-					{
+                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("motorway_link")) || (res == 1 && node.Value.roadTypes.Count == 1))
+                    {
                         DisconnectionNode disconnectionNode = new DisconnectionNode();
                         disconnectionNode.Id = node.Value.Id;
                         disconnectionNode.Lat = node.Value.Lat;
                         disconnectionNode.Lng = node.Value.Lng;
                         List<Way> w = new List<Way>();
-                        foreach(KeyValuePair<string,string> road in node.Value.wayToNodeMap)
-						{
+                        foreach (KeyValuePair<string, string> road in node.Value.wayToNodeMap)
+                        {
                             w.Add(WayHashMap.GetValueOrDefault(road.Key));
-						}
+                        }
                         disconnectionNode.roads = w;
                         disconnectionNodes.Add(disconnectionNode);
                     }
                 }
-			}
+            }
 
 
             File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
@@ -142,7 +142,7 @@ namespace OSM_Connecitvity_Backend_Revised
             //queue for the children nodes
             Queue children;
 
-            int currentLabel=0;
+            int currentLabel = 0;
 
             //list of labels to be removed after bfs
             HashSet<int> LabelsToBeRemoved = new HashSet<int>();
@@ -165,12 +165,12 @@ namespace OSM_Connecitvity_Backend_Revised
                     children.Enqueue(node.Value);
                     subtree.Add(node.Value);
 
-                    while(children.Count != 0)
+                    while (children.Count != 0)
                     {
                         JunctionNode currentNode = (JunctionNode)children.Dequeue();
 
                         //look thru all the ways this particular node is present in
-                        foreach(string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
+                        foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                         {
                             Way wayObject = WayHashMap.GetValueOrDefault(way);
 
@@ -184,7 +184,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                 if (label != currentLabel)
                                 {
                                     //if the node is already labeled
-                                    if(label != 0)
+                                    if (label != 0)
                                     {
                                         //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
                                         foreach (JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
@@ -204,19 +204,19 @@ namespace OSM_Connecitvity_Backend_Revised
                                         subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
 
                                     }
-                                    
+
                                 }
 
                                 //get the label of the end node of that way
                                 label = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label;
                                 //if its label doesnt match the current label
-                                if (label !=currentLabel)
+                                if (label != currentLabel)
                                 {
                                     //if the node is already labeled
                                     if (label != 0)
                                     {
                                         //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
-                                        foreach(JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
+                                        foreach (JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
                                         {
                                             junctionNode.label = currentLabel;
                                         }
@@ -234,7 +234,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                     }
                                 }
                             }
-                        }   
+                        }
                     }
                     //add the subtree to the dictionary
                     LabelToSubtrees.Add(currentLabel, subtree);
@@ -242,12 +242,12 @@ namespace OSM_Connecitvity_Backend_Revised
             }
 
             //remove all the labels which were merged with other labels
-            foreach(int label in LabelsToBeRemoved)
+            foreach (int label in LabelsToBeRemoved)
             {
                 LabelToSubtrees.Remove(label);
             }
 
-            connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link" });
+            connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link", "primary_link", "primary", "fares" });
 
             //-------------------Code to color code the sub graphs starts below---------------------------//
 
@@ -273,7 +273,7 @@ namespace OSM_Connecitvity_Backend_Revised
                             DisjointedSubTreeWays.Add(way.Value);
                         }
                     }
-                       
+
                 }
             }
 
@@ -284,13 +284,14 @@ namespace OSM_Connecitvity_Backend_Revised
             //write it to the file
             File.WriteAllText(fileName, JsonConvert.SerializeObject(DisjointedSubTreeWays.ToList()));
 
-            
+
         }
 
 
         private void connectSubGraphs(Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees, List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses)
         {
             Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint = new Dictionary<int, HashSet<JunctionNode>>();
+            Dictionary<int, HashSet<JunctionNode>> LabelToIncomingEndPoint = new Dictionary<int, HashSet<JunctionNode>>();
 
             //this hashet will contain the incoming endpoint nodes of all of the subgraphs
             HashSet<JunctionNode> incomingEnpointNodes = new HashSet<JunctionNode>();
@@ -310,7 +311,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     foreach (string way in nd.wayToNodeMap.Keys)
                     {
                         // if we are at a road class that the subtree is out made of
-                        if(subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
+                        if (subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                         {
                             // if oneWay = yes or null (we assume null means it is oneway)
                             if (!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
@@ -320,19 +321,19 @@ namespace OSM_Connecitvity_Backend_Revised
                                 if (nd.roadTypes.Intersect(subgraphRoadClasses).Any() && (nd.roadTypes.Intersect(allowedPathRoadClasses).Any()))//.Except(new List<string>() { "motorway_link" })).Any()))
                                 {
                                     //if it is an incoming node into the subgraph
-                                    if(WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(nd.Id))
+                                    if (WayHashMap.GetValueOrDefault(way).startNode.Id.Equals(nd.Id))
                                     {
                                         //add to incoming nodes
                                         incomingEnpointNodes.Add(nd);
                                     }
                                     // if it is an outgoing node from the subgraph
-                                    else if(WayHashMap.GetValueOrDefault(way).endNode.Id.Equals(nd.Id))
+                                    else if (WayHashMap.GetValueOrDefault(way).endNode.Id.Equals(nd.Id))
                                     {
                                         //add it to outgoing nodes of that subgrapg
                                         set.Add(nd);
                                         LabelToOutgoingEndPoint[label] = set;
                                     }
-                                    
+
                                 }
                             }
                             // if oneway = no
@@ -347,32 +348,36 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
             }
 
-            //List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, LabelToOutgoingEndPoint.FirstOrDefault().Key);
-            //int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-            //List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, 33);
+            foreach (JunctionNode node in incomingEnpointNodes)
+            {
+                HashSet<JunctionNode> set = LabelToIncomingEndPoint.GetValueOrDefault(node.label, new HashSet<JunctionNode>());
+                set.Add(node);
+                LabelToIncomingEndPoint[node.label] = set;
+            }
 
-            //HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(33).ToHashSet();
-            //sett = sett.Union(LabelToSubtrees.GetValueOrDefault(95)).ToHashSet();
-            //sett.RemoveWhere(x =>( x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
 
-            //sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
-            //sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
-            int sourcelabel = 2;
+
+            //-------------------------------------- BELOW IS WHERE THE ULTRON ALGORITHM STARTS -------------------------------------------
+
+            int sourcelabel = 12;
             List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel);
             int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
             List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, targetLabel, sourcelabel);
 
-            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(136).ToHashSet();
-            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(135)).ToHashSet();
+            
+            HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(12).ToHashSet();
+            sett = sett.Union(LabelToSubtrees.GetValueOrDefault(6)).ToHashSet();
             sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
 
-            sett = sett.Union(AtoBpaths.FirstOrDefault()).ToHashSet();
-            sett = sett.Union(BtoApaths.FirstOrDefault()).ToHashSet();
+            sett = sett.Union(AtoBpaths.SelectMany(x=> x).ToHashSet()).ToHashSet();
+            sett = sett.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
 
+            //While debbuging; Its normal if the number of nodes is less than the one in labelToSubtrees because we are removing motorway links
             List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
 
         }
-
+        
+        public List<string> motorwayMotorwayLink = new List<string>{ "motorway", "motorway_link" };
 
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
         private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes,int subtreeLabel)
@@ -398,7 +403,12 @@ namespace OSM_Connecitvity_Backend_Revised
 
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
-                    {                       
+                    {
+                        if(way.Equals("140819368"))
+                        {
+
+                        }
+
                         if(!subgraphRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                         {
                             //if we want to achieve connectivity only using trunk and trunklinks
@@ -443,8 +453,9 @@ namespace OSM_Connecitvity_Backend_Revised
                                 //if we aren't at a roundabout
                                 else
                                 {
+
                                     // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
-                                    if(!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
+                                    if((!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no") && motorwayMotorwayLink.Contains(WayHashMap.GetValueOrDefault(way).roadClass)) || WayHashMap.GetValueOrDefault(way).oneWay.Equals("yes"))
                                     {
                                         // if it is one way, then we do not traverse from endnode to startnode because it would violate the oneWay direction
                                         if(currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
@@ -587,7 +598,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                 else
                                 {
                                     // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
-                                    if (!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no"))
+                                    if ((!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no") && motorwayMotorwayLink.Contains(WayHashMap.GetValueOrDefault(way).roadClass)) || WayHashMap.GetValueOrDefault(way).oneWay.Equals("yes"))
                                     {
                                         // if it is one way, then we do not traverse from endnode to startnode because it would violate the oneWay direction
                                         if (currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
@@ -703,7 +714,7 @@ namespace OSM_Connecitvity_Backend_Revised
                         else
                         {
                             // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
-                            if (!way.oneWay.Equals("no")) 
+                            if ((!way.oneWay.Equals("no") && motorwayMotorwayLink.Contains(way.roadClass)) || way.oneWay.Equals("yes")) 
                             {
                                 if (node.Id.Equals(way.startNode.Id))
                                 {
