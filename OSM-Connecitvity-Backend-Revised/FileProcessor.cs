@@ -247,7 +247,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 LabelToSubtrees.Remove(label);
             }
 
-            connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link", "motorway_link", "primary_link", "primary", "fares" });
+            connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, new List<string>() { "trunk", "trunk_link","primary","primary_link", "motorway_link", "fares" });
 
             //-------------------Code to color code the sub graphs starts below---------------------------//
 
@@ -364,7 +364,7 @@ namespace OSM_Connecitvity_Backend_Revised
             //int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
             //List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, sourcelabel, targetLabel);
 
-            
+
             //HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(sourcelabel).ToHashSet();
             //sett = sett.Union(LabelToSubtrees.GetValueOrDefault(targetLabel)).ToHashSet();
             //sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
@@ -376,21 +376,23 @@ namespace OSM_Connecitvity_Backend_Revised
             //List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
 
 
-
+            
             // Create the main graph and the aggregate label list of that graph
             HashSet<JunctionNode> currentGraph = new HashSet<JunctionNode>();           
             List<int> currentGraphAggregateLabels =  new List<int>();
 
-            //Assign the first graph to the main graph and add its key to the aggregate list
-            currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
-            currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);
+            int currentGraphLabel = 5;
 
-            //remove the current graph from labelToOutgoing 
-            int currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
+            //Assign the first graph to the main graph and add its key to the aggregate list
+            currentGraph = LabelToOutgoingEndPoint.GetValueOrDefault(currentGraphLabel);
+            currentGraphAggregateLabels.Add(currentGraphLabel);
+
+            //remove the current graph from labelToOutgoing
             LabelToOutgoingEndPoint.Remove(currentGraphLabel);
 
-            while (LabelToOutgoingEndPoint.Count != 0)
+            while (LabelToOutgoingEndPoint.Count > 0)
             {
+                
                 //go from currentGraph to the closes graph it finds, and the other way around
                 List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, currentGraph, incomingEnpointNodes, currentGraphAggregateLabels);
 
@@ -398,6 +400,7 @@ namespace OSM_Connecitvity_Backend_Revised
                 if (AtoBpaths.Count > 0)
                 {
                     int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+                    Console.WriteLine("=================================================>" + targetLabel);
                     List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, currentGraphAggregateLabels, targetLabel);
 
                     //Unioning AtoB path, BtoA path and target graph to the current graph
@@ -421,13 +424,21 @@ namespace OSM_Connecitvity_Backend_Revised
                     currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
                     LabelToOutgoingEndPoint.Remove(currentGraphLabel);
                 }
-
-
             }
-
+            File.WriteAllText("currentgraph_primary.json", JsonConvert.SerializeObject(currentGraph));
+            
+            
+            //HashSet<JunctionNode>
+            currentGraph = JsonConvert.DeserializeObject<HashSet<JunctionNode>>(File.ReadAllText(@"currentgraph.json"));
+            HashSet<JunctionNode> sett = LabelToSubtrees.Values.SelectMany(x => x).ToHashSet();
+            sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
+            sett = sett.Union(currentGraph).ToHashSet();
+            //File.WriteAllText("union.json", JsonConvert.SerializeObject(sett));
+            List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
+            File.WriteAllText("result.json", JsonConvert.SerializeObject(result));
 
         }
-        
+
         public List<string> motorwayMotorwayLink = new List<string>{ "motorway", "motorway_link" };
 
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
@@ -714,16 +725,24 @@ namespace OSM_Connecitvity_Backend_Revised
             GraphTarjan g = new GraphTarjan();
 
             Dictionary<string, NodeTarjan> d = new Dictionary<string, NodeTarjan>();
-
+            Dictionary<string, int> testcount = new Dictionary<string, int>();
+            
+            //populating g.V, and g.Adj
             foreach(JunctionNode node in graph)
             {
-                NodeTarjan nd = new NodeTarjan(node.Id);
-                g.V.Add(nd);
-                d.Add(node.Id, nd);
-                g.Adj[nd] = new HashSet<NodeTarjan>();
+               
+                if (!d.ContainsKey(node.Id))
+                {
+                    NodeTarjan nd = new NodeTarjan(node.Id);
+                    g.V.Add(nd);
+                    d.Add(node.Id, nd);
+                    g.Adj[nd] = new HashSet<NodeTarjan>();
+                }
+               
             }
-                
-            foreach(JunctionNode node in graph)
+
+          
+            foreach (JunctionNode node in graph)
             {         
                 HashSet<NodeTarjan> set = g.Adj.GetValueOrDefault(d.GetValueOrDefault(node.Id));
 
