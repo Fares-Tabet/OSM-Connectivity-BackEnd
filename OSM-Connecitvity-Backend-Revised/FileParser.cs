@@ -245,12 +245,10 @@ namespace OSM_Connecitvity_Backend_Revised
             {
                 //update the start junction node value
                 JunctionNode junctionNode = junctionNodeDictionary.GetValueOrDefault(way.startNode.Id);
-
-
-
+               
                 if (junctionNode != null)
                 {
-                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id))
+                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id.Substring(0, way.Id.Length - 1)))
                     {
                         junctionNode.roadTypes.Remove(wayDictionary.GetValueOrDefault(way.Id).roadClass);
                     }
@@ -277,10 +275,10 @@ namespace OSM_Connecitvity_Backend_Revised
 
                 //update the end junction node value
                 junctionNode = junctionNodeDictionary.GetValueOrDefault(way.endNode.Id);
-
+                
                 if (junctionNode != null)
                 {
-                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id))
+                    if (junctionNode.wayToNodeMap.ContainsKey(way.Id.Substring(0, way.Id.Length - 1)))
                     {
                         junctionNode.roadTypes.Remove(wayDictionary.GetValueOrDefault(way.Id).roadClass);
                     }
@@ -306,12 +304,14 @@ namespace OSM_Connecitvity_Backend_Revised
                 foreach (Node node in way.nodes)
                 {
                     string wayid = way.Id.Substring(0, way.Id.Length - 1);
-                    if (node.ways.Contains(wayid))
+                    if (node.ways.Contains(wayid) || node.ways.Contains(way.Id))
                     {
                         node.roadClasses.Remove(wayDictionary.GetValueOrDefault(wayid).roadClass);
+                        
                     }
                     node.roadClasses.Add(way.roadClass);
                     node.ways.Remove(wayid);
+                    node.ways.Remove(way.Id);
                     node.ways.Add(way.Id);
                 }
             }
