@@ -377,58 +377,58 @@ namespace OSM_Connecitvity_Backend_Revised
 
 
             
-            // Create the main graph and the aggregate label list of that graph
-            HashSet<JunctionNode> currentGraph = new HashSet<JunctionNode>();           
-            List<int> currentGraphAggregateLabels =  new List<int>();
+            //// Create the main graph and the aggregate label list of that graph
+            //HashSet<JunctionNode> currentGraph = new HashSet<JunctionNode>();           
+            //List<int> currentGraphAggregateLabels =  new List<int>();
 
-            int currentGraphLabel = 5;
+            //int currentGraphLabel = 5;
 
-            //Assign the first graph to the main graph and add its key to the aggregate list
-            currentGraph = LabelToOutgoingEndPoint.GetValueOrDefault(currentGraphLabel);
-            currentGraphAggregateLabels.Add(currentGraphLabel);
+            ////Assign the first graph to the main graph and add its key to the aggregate list
+            //currentGraph = LabelToOutgoingEndPoint.GetValueOrDefault(currentGraphLabel);
+            //currentGraphAggregateLabels.Add(currentGraphLabel);
 
-            //remove the current graph from labelToOutgoing
-            LabelToOutgoingEndPoint.Remove(currentGraphLabel);
+            ////remove the current graph from labelToOutgoing
+            //LabelToOutgoingEndPoint.Remove(currentGraphLabel);
 
-            while (LabelToOutgoingEndPoint.Count > 0)
-            {
+            //while (LabelToOutgoingEndPoint.Count > 0)
+            //{
                 
-                //go from currentGraph to the closes graph it finds, and the other way around
-                List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, currentGraph, incomingEnpointNodes, currentGraphAggregateLabels);
+            //    //go from currentGraph to the closes graph it finds, and the other way around
+            //    List<List<JunctionNode>> AtoBpaths = BFSHelper(subgraphRoadClasses, allowedPathRoadClasses, currentGraph, incomingEnpointNodes, currentGraphAggregateLabels);
 
-                //if currentgraph is able to connect to a neiboring subgraph
-                if (AtoBpaths.Count > 0)
-                {
-                    int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
-                    Console.WriteLine("=================================================>" + targetLabel);
-                    List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, currentGraphAggregateLabels, targetLabel);
+            //    //if currentgraph is able to connect to a neiboring subgraph
+            //    if (AtoBpaths.Count > 0)
+            //    {
+            //        int targetLabel = AtoBpaths.FirstOrDefault().LastOrDefault().label;
+            //        Console.WriteLine("=================================================>" + targetLabel);
+            //        List<List<JunctionNode>> BtoApaths = BFSHelperWithTargetSubtree(subgraphRoadClasses, allowedPathRoadClasses, LabelToOutgoingEndPoint, incomingEnpointNodes, currentGraphAggregateLabels, targetLabel);
 
-                    //Unioning AtoB path, BtoA path and target graph to the current graph
-                    currentGraph = currentGraph.Union(AtoBpaths.SelectMany(x => x).ToHashSet()).ToHashSet();
-                    currentGraph = currentGraph.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
-                    HashSet<JunctionNode> targetGraph = LabelToOutgoingEndPoint.GetValueOrDefault(targetLabel);
-                    currentGraph.Union(targetGraph);
+            //        //Unioning AtoB path, BtoA path and target graph to the current graph
+            //        currentGraph = currentGraph.Union(AtoBpaths.SelectMany(x => x).ToHashSet()).ToHashSet();
+            //        currentGraph = currentGraph.Union(BtoApaths.SelectMany(x => x).ToHashSet()).ToHashSet();
+            //        HashSet<JunctionNode> targetGraph = LabelToOutgoingEndPoint.GetValueOrDefault(targetLabel);
+            //        currentGraph.Union(targetGraph);
 
-                    //removing the target graph label and adding it to the currentGraphAggregateLabels
-                    LabelToOutgoingEndPoint.Remove(targetLabel);
-                    currentGraphAggregateLabels.Add(targetLabel);
-                }
-                //if we cannot reach any unvisisted subgraph (if we visited everything in current island)
-                else
-                {
-                    //Assign the first graph to the main graph and add its key to the aggregate list
-                    currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
-                    currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);
+            //        //removing the target graph label and adding it to the currentGraphAggregateLabels
+            //        LabelToOutgoingEndPoint.Remove(targetLabel);
+            //        currentGraphAggregateLabels.Add(targetLabel);
+            //    }
+            //    //if we cannot reach any unvisisted subgraph (if we visited everything in current island)
+            //    else
+            //    {
+            //        //Assign the first graph to the main graph and add its key to the aggregate list
+            //        currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
+            //        currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);
 
-                    //remove the current graph from labelToOutgoing 
-                    currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
-                    LabelToOutgoingEndPoint.Remove(currentGraphLabel);
-                }
-            }
-            File.WriteAllText("currentgraph_primary.json", JsonConvert.SerializeObject(currentGraph));
+            //        //remove the current graph from labelToOutgoing 
+            //        currentGraphLabel = LabelToOutgoingEndPoint.FirstOrDefault().Key;
+            //        LabelToOutgoingEndPoint.Remove(currentGraphLabel);
+            //    }
+            //}
+            //File.WriteAllText("currentgraph_primary.json", JsonConvert.SerializeObject(currentGraph));
             
             
-            //HashSet<JunctionNode>
+            HashSet<JunctionNode>
             currentGraph = JsonConvert.DeserializeObject<HashSet<JunctionNode>>(File.ReadAllText(@"currentgraph.json"));
             HashSet<JunctionNode> sett = LabelToSubtrees.Values.SelectMany(x => x).ToHashSet();
             sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
