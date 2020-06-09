@@ -268,7 +268,7 @@ namespace OSM_Connecitvity_Backend_Revised
         // that will suggest a connectivity fix based on the least amount of nodes needed to connect them using the road classes
         // in allowedRoadClasses (it is currently set to do so for motorways, check the last line of the method to see why)
         // the results will be written into a file
-        //TODO: the big boi algoirhtm is not yet automated, but it works and the fix isnt difficult 
+        //TODO: the big boi algoirhtm is not yet automated, but it works and the fix isnt difficult (
         public void suggestConnectivityFixBasedOnLeastAmountOfNodes(List<string> diconnectionsRoadClassifications, List<string> allowedRoadClasses, string fileName)
         {
             Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
@@ -469,7 +469,7 @@ namespace OSM_Connecitvity_Backend_Revised
             HashSet<JunctionNode> currentGraph = new HashSet<JunctionNode>();
             List<int> currentGraphAggregateLabels = new List<int>();
 
-            int currentGraphLabel = 5;
+            int currentGraphLabel = LabelToIncomingEndPoint.Keys.FirstOrDefault();
 
 
             //Assign the first graph to the main graph and add its key to the aggregate list
@@ -483,7 +483,7 @@ namespace OSM_Connecitvity_Backend_Revised
 
 
 
-            while (LabelToOutgoingEndPoint.Count > 7)
+            while (LabelToOutgoingEndPoint.Count > 0)
             {
 
                 //go from currentGraph to the closes graph it finds, and the other way around
@@ -510,15 +510,12 @@ namespace OSM_Connecitvity_Backend_Revised
                     LabelToOutgoingEndPoint.Remove(targetLabel);
                     currentGraphAggregateLabels.Add(targetLabel);
 
-                    if(currentGraphAggregateLabels.Count==7)
-                    {
-                        break;
-                    }
+                  
                 }
                 //if we cannot reach any unvisisted subgraph (if we visited everything in current island)
                 else
                 {
-                    break;
+                    
                     //Assign the first graph to the main graph and add its key to the aggregate list
                     currentGraph = LabelToOutgoingEndPoint.FirstOrDefault().Value.ToHashSet();
                     currentGraphAggregateLabels.Add(LabelToOutgoingEndPoint.FirstOrDefault().Key);

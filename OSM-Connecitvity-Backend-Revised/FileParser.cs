@@ -42,6 +42,8 @@ namespace OSM_Connecitvity_Backend_Revised
                 // Populating way object 
                 way.Id = el.FirstAttribute.Value;
 
+                
+
                 List<XElement> inspectedTag = el.Descendants("tag").Where(x => (string)x.Attribute("k") == "highway").ToList();
                 way.roadClass = inspectedTag.Count == 0 ? "" : ((XElement)inspectedTag.First()).LastAttribute.Value;
 
@@ -110,13 +112,25 @@ namespace OSM_Connecitvity_Backend_Revised
                     lastJunction = new JunctionNode(endNode.Id, new Dictionary<string, string>() { { way.Id, startNode.Id } }, new List<string>() { { way.roadClass } }, startNode.Lat, startNode.Lng);
                     junctionNodeDictionary.Add(endNode.Id, lastJunction);
                 }
+
                 wayDictionary.Add(way.Id,way);
                 //Console.WriteLine(way.Id);
 
             }
 
+            Console.WriteLine(wayDictionary.GetValueOrDefault("210657653").Id );
             find_T_IntersectionWays();
-
+            if(wayDictionary.ContainsKey("210657653"))
+            {
+                Console.WriteLine("Waydictionary found it");
+            }else if(intersectionWaysDictionary.ContainsKey("210657653"))
+            {
+                Console.WriteLine("Intesection way Dictionnary found it");
+            }else
+            {
+                Console.WriteLine("Both wayHashmaps didnt find it");
+            }
+            
             // Create the way data file
             File.WriteAllText("ways.json", JsonConvert.SerializeObject(wayDictionary));
             Console.WriteLine("Successfully created ways.json file");
@@ -198,7 +212,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                 continue;
                             }
                             //if the number of roadclasses is 1, it implies that it is the end node or a start node, hence change the flag to end this way object and initialize a new one
-                            if (node.roadClasses.Count > 1)
+                            if (node.roadClasses.Count > 1 || wayDictionary.GetValueOrDefault(way).endNode.Id.Equals(node.Id))
                             {
                                 flag = -1;
                             }
