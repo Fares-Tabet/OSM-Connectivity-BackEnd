@@ -118,18 +118,7 @@ namespace OSM_Connecitvity_Backend_Revised
 
             }
 
-            Console.WriteLine(wayDictionary.GetValueOrDefault("210657653").Id );
-            find_T_IntersectionWays();
-            if(wayDictionary.ContainsKey("210657653"))
-            {
-                Console.WriteLine("Waydictionary found it");
-            }else if(intersectionWaysDictionary.ContainsKey("210657653"))
-            {
-                Console.WriteLine("Intesection way Dictionnary found it");
-            }else
-            {
-                Console.WriteLine("Both wayHashmaps didnt find it");
-            }
+            
             
             // Create the way data file
             File.WriteAllText("ways.json", JsonConvert.SerializeObject(wayDictionary));
