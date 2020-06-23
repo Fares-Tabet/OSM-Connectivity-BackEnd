@@ -68,6 +68,12 @@ namespace OSM_Connecitvity_Backend_Revised
 
         public FileProcessor()
         {
+            //NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"fiji_NodeDictionary.json"));
+            //WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"fiji_ways.json"));
+            //JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"fiji_junctionNodes.json"));
+            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"fiji_all_NodeDictionary.json"));
+            WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"fiji_all_ways.json"));
+            JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"fiji_all_junctionNodes.json"));
             NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"NodeDictionary.json"));
             WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
             JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
@@ -81,13 +87,97 @@ namespace OSM_Connecitvity_Backend_Revised
             List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
 
             //for each junction node
-            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+             foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
             {   //if it is connected to a motorway 
                 if (node.Value.roadTypes.Contains("motorway"))
                 {
                     int res = (from x in node.Value.roadTypes
                                select x).Distinct().Count();
-                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("motorway_link")) || (res == 1 && node.Value.roadTypes.Count == 1))
+
+                    // Sikha : what does this last condition mean.
+                    // We have only motorways for this jn node and only one motorway
+                    // Why is it a disconnection? Is it because we are looking for strongly connected components
+                    // Any MW cannot be a dead end. It needs to end with MWL or other type
+
+                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("motorway_link")) ||
+                        (res == 1 && node.Value.roadTypes.Count == 1))
+                    {
+                        DisconnectionNode disconnectionNode = new DisconnectionNode();
+                        disconnectionNode.Id = node.Value.Id;
+                        disconnectionNode.Lat = node.Value.Lat;
+                        disconnectionNode.Lng = node.Value.Lng;
+                        List<Way> w = new List<Way>();
+                        foreach (KeyValuePair<string, string> road in node.Value.wayToNodeMap)
+                        {
+                            w.Add(WayHashMap.GetValueOrDefault(road.Key));
+                        }
+                        disconnectionNode.roads = w;
+                        disconnectionNodes.Add(disconnectionNode);
+                    }
+                }
+            }
+
+
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
+            Console.WriteLine("Succesfully created the file " + fileName);
+        }
+
+        //Added by Sikha
+        //finding incorrect highway = primary connections
+        public void generateIncorrectPrimaryConnectionsFiji(string fileName)
+        {
+            List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
+
+            //for each junction node
+            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+            {   //if it is connected to a primary 
+                if (node.Value.roadTypes.Contains("primary"))
+                {
+                    int res = (from x in node.Value.roadTypes
+                               select x).Distinct().Count();
+
+                    // Sikha : What rule should we test here, Is it P-PL (||lr to MW-MWL)
+                    if((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("primary_link")) ||
+                        (res == 1 && node.Value.roadTypes.Count == 1))
+                    {
+                        DisconnectionNode disconnectionNode = new DisconnectionNode();
+                        disconnectionNode.Id = node.Value.Id;
+                        disconnectionNode.Lat = node.Value.Lat;
+                        disconnectionNode.Lng = node.Value.Lng;
+                        List<Way> w = new List<Way>();
+                        foreach (KeyValuePair<string, string> road in node.Value.wayToNodeMap)
+                        {
+                            w.Add(WayHashMap.GetValueOrDefault(road.Key));
+                        }
+                        disconnectionNode.roads = w;
+                        disconnectionNodes.Add(disconnectionNode);
+                    }
+                }
+            }
+
+
+            File.WriteAllText(fileName, JsonConvert.SerializeObject(disconnectionNodes));
+            Console.WriteLine("Succesfully created the file " + fileName);
+        }
+
+        //Added by Sikha
+        //finding incorrect primary connections for all. This considers all types
+        public void generateIncorrectPrimaryConnections(string fileName)
+        {
+            List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
+
+            //for each junction node
+            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+            {   //if it is connected to a primary 
+                if (node.Value.roadTypes.Contains("primary"))
+                {
+                    int res = (from x in node.Value.roadTypes
+                               select x).Distinct().Count();
+
+                    List<string> notAllowedConnections = node.Value.roadTypes.Except(new List<string> { "primary_link", "trunk_link", "motorway_link", "primary" }).ToList();
+                    if ((res >= 3 && notAllowedConnections.Count > 0)
+                        || (res == 2 && (!node.Value.roadTypes.Contains("primary_link") || !node.Value.roadTypes.Contains("trunk_link") || !node.Value.roadTypes.Contains("motorway_link")))
+                        ||  (res == 1 && node.Value.roadTypes.Count == 1))
                     {
                         DisconnectionNode disconnectionNode = new DisconnectionNode();
                         disconnectionNode.Id = node.Value.Id;
@@ -112,7 +202,7 @@ namespace OSM_Connecitvity_Backend_Revised
         // This method traverses the road networks and searches for disconnections in the road networked formed by the specified classes in the parameter list
         public void generateDisconnectionsDataBFS(List<string> diconnectionsRoadClassifications, string fileName)
         {
-            Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
+            //Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
 
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
@@ -135,7 +225,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
 
                     currentLabel++;
-                    checker.Add(currentLabel, new HashSet<int>());
+                    //checker.Add(currentLabel, new HashSet<int>());
                     children = new Queue();
 
                     //initialize the parent with the current label
@@ -172,7 +262,8 @@ namespace OSM_Connecitvity_Backend_Revised
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
-                                        checker.GetValueOrDefault(label).Add(currentLabel);
+                                        // Sikha: What is this checker doing?
+                                        //checker.GetValueOrDefault(label).Add(currentLabel);
                                     }
                                     //else it means that this node is unlabeled and add it to the children queue
                                     else
@@ -264,6 +355,7 @@ namespace OSM_Connecitvity_Backend_Revised
 
         }
 
+
         // This method looks for disocnnections in the diconnectionsRoadClassifications road network, then runs an alogirthm
         // that will suggest a connectivity fix based on the least amount of nodes needed to connect them using the road classes
         // in allowedRoadClasses (it is currently set to do so for motorways, check the last line of the method to see why)
@@ -271,7 +363,7 @@ namespace OSM_Connecitvity_Backend_Revised
         //TODO: the big boi algoirhtm is not yet automated, but it works and the fix isnt difficult (
         public void suggestConnectivityFixBasedOnLeastAmountOfNodes(List<string> diconnectionsRoadClassifications, List<string> allowedRoadClasses, string fileName)
         {
-            Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
+            //Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
 
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
@@ -294,7 +386,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
 
                     currentLabel++;
-                    checker.Add(currentLabel, new HashSet<int>());
+                    //checker.Add(currentLabel, new HashSet<int>());
                     children = new Queue();
 
                     //initialize the parent with the current label
@@ -323,6 +415,8 @@ namespace OSM_Connecitvity_Backend_Revised
                                     //if the node is already labeled
                                     if (label != 0)
                                     {
+                                        //Sikha
+                                        //Console.WriteLine("LabelToSubtree  " + LabelToSubtrees.GetValueOrDefault(label));
                                         //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
                                         foreach (JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
                                         {
@@ -331,7 +425,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
-                                        checker.GetValueOrDefault(label).Add(currentLabel);
+                                        //checker.GetValueOrDefault(label).Add(currentLabel);
                                     }
                                     //else it means that this node is unlabeled and add it to the children queue
                                     else
@@ -375,6 +469,8 @@ namespace OSM_Connecitvity_Backend_Revised
                     }
                     //add the subtree to the dictionary
                     LabelToSubtrees.Add(currentLabel, subtree);
+                    //Sikha
+                    //Console.WriteLine("LabelToSubtree  " + LabelToSubtrees.GetValueOrDefault(currentLabel));
                 }
             }
 
@@ -549,38 +645,6 @@ namespace OSM_Connecitvity_Backend_Revised
             Console.WriteLine("Succesfully created the file " + fileName);
         }
 
-        //method which takes a Junction nodes file as input and returns the network graph visualization file as output
-        public void getWaysFromNodes(string inputFileName, string visualizaitonFileName)
-        {
-            List<HashSet<string>> listOfSets = JsonConvert.DeserializeObject<List<HashSet<string>>>(File.ReadAllText(@inputFileName));
-            
-            HashSet<Way> ways = new HashSet<Way>();
-            foreach (HashSet<string> set in listOfSets)
-            {
-                if (set.Count < 2)
-                    continue;
-
-
-
-                
-                foreach (string node in set)
-                {
-                    JunctionNode jnode = JunctionNodeHashMap.GetValueOrDefault(node);
-                    foreach (KeyValuePair<string, string> way in jnode.wayToNodeMap)
-                    {
-                        if (set.Contains(way.Value))
-                            ways.Add(WayHashMap.GetValueOrDefault(way.Key));
-                    }
-
-
-
-                }
-                
-            }
-
-            File.WriteAllText(visualizaitonFileName, JsonConvert.SerializeObject(ways.ToList()));
-            Console.WriteLine("Succesfully created the file " + visualizaitonFileName);
-        }     
 
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
         private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,HashSet<JunctionNode> sourceGraph, HashSet<JunctionNode> incomingEnpointNodes,List<int> subtreeLabels)
@@ -860,7 +924,9 @@ namespace OSM_Connecitvity_Backend_Revised
             return pathsOfSubtree.OrderBy(a => a.Count).ToList();
         }
 
-        // kosaraju modified algorithm to check strongly connected components
+
+
+        // Tarjan modified algorithm to check strongly connected components
         private List<List<string>> generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
             GraphTarjan g = new GraphTarjan();
@@ -973,5 +1039,40 @@ namespace OSM_Connecitvity_Backend_Revised
             File.WriteAllText(fileName, JsonConvert.SerializeObject(ways));
             Console.WriteLine("Succesfully created the file " + fileName);
         }
+
+        //method which takes a Junction nodes file as input and returns the network graph visualization file as output
+        public void getWaysFromNodes(string inputFileName, string visualizaitonFileName)
+        {
+            List<HashSet<string>> listOfSets = JsonConvert.DeserializeObject<List<HashSet<string>>>(File.ReadAllText(@inputFileName));
+
+            HashSet<Way> ways = new HashSet<Way>();
+            foreach (HashSet<string> set in listOfSets)
+            {
+                if (set.Count < 2)
+                    continue;
+
+
+
+
+                foreach (string node in set)
+                {
+                    JunctionNode jnode = JunctionNodeHashMap.GetValueOrDefault(node);
+                    foreach (KeyValuePair<string, string> way in jnode.wayToNodeMap)
+                    {
+                        // Sikha: debug to understand why set.contains
+                        if (set.Contains(way.Value))
+                            ways.Add(WayHashMap.GetValueOrDefault(way.Key));
+                    }
+
+
+
+                }
+
+            }
+
+            File.WriteAllText(visualizaitonFileName, JsonConvert.SerializeObject(ways.ToList()));
+            Console.WriteLine("Succesfully created the file " + visualizaitonFileName);
+        }
+
     }
 }
