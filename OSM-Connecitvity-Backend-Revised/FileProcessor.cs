@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -68,18 +68,16 @@ namespace OSM_Connecitvity_Backend_Revised
 
         public FileProcessor()
         {
-            //NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"fiji_NodeDictionary.json"));
-            //WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"fiji_ways.json"));
-            //JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"fiji_junctionNodes.json"));
-            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"fiji_all_NodeDictionary.json"));
-            WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"fiji_all_ways.json"));
-            JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"fiji_all_junctionNodes.json"));
-            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"NodeDictionary.json"));
-            WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
-            JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
+            NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"FJ_NodeDictionary.json"));
+            WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"FJ_ways.json"));
+            JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"FJ_junctionNodes.json"));
+            //NodeDictionary = JsonConvert.DeserializeObject<Dictionary<string, Node>>(File.ReadAllText(@"NodeDictionary.json"));
+            //WayHashMap = JsonConvert.DeserializeObject<Dictionary<string, Way>>(System.IO.File.ReadAllText(@"ways.json"));
+            //JunctionNodeHashMap = JsonConvert.DeserializeObject<Dictionary<string, JunctionNode>>(System.IO.File.ReadAllText(@"junctionNodes.json"));
+
         }
 
-        
+
 
         //finding incorrect highway = motorway connections
         public void generateIncorrectMotorwayConnections(string fileName)
@@ -87,20 +85,13 @@ namespace OSM_Connecitvity_Backend_Revised
             List<DisconnectionNode> disconnectionNodes = new List<DisconnectionNode>();
 
             //for each junction node
-             foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
+            foreach (KeyValuePair<string, JunctionNode> node in JunctionNodeHashMap)
             {   //if it is connected to a motorway 
                 if (node.Value.roadTypes.Contains("motorway"))
                 {
                     int res = (from x in node.Value.roadTypes
                                select x).Distinct().Count();
-
-                    // Sikha : what does this last condition mean.
-                    // We have only motorways for this jn node and only one motorway
-                    // Why is it a disconnection? Is it because we are looking for strongly connected components
-                    // Any MW cannot be a dead end. It needs to end with MWL or other type
-
-                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("motorway_link")) ||
-                        (res == 1 && node.Value.roadTypes.Count == 1))
+                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("motorway_link")) || (res == 1 && node.Value.roadTypes.Count == 1))
                     {
                         DisconnectionNode disconnectionNode = new DisconnectionNode();
                         disconnectionNode.Id = node.Value.Id;
@@ -122,7 +113,8 @@ namespace OSM_Connecitvity_Backend_Revised
             Console.WriteLine("Succesfully created the file " + fileName);
         }
 
-        //Added by Sikha
+
+        //Added in SUM
         //finding incorrect highway = primary connections
         public void generateIncorrectPrimaryConnectionsFiji(string fileName)
         {
@@ -137,7 +129,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                select x).Distinct().Count();
 
                     // Sikha : What rule should we test here, Is it P-PL (||lr to MW-MWL)
-                    if((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("primary_link")) ||
+                    if ((res >= 3) || (res == 2 && !node.Value.roadTypes.Contains("primary_link")) ||
                         (res == 1 && node.Value.roadTypes.Count == 1))
                     {
                         DisconnectionNode disconnectionNode = new DisconnectionNode();
@@ -160,7 +152,7 @@ namespace OSM_Connecitvity_Backend_Revised
             Console.WriteLine("Succesfully created the file " + fileName);
         }
 
-        //Added by Sikha
+        //Added in SUM
         //finding incorrect primary connections for all. This considers all types
         public void generateIncorrectPrimaryConnections(string fileName)
         {
@@ -177,7 +169,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     List<string> notAllowedConnections = node.Value.roadTypes.Except(new List<string> { "primary_link", "trunk_link", "motorway_link", "primary" }).ToList();
                     if ((res >= 3 && notAllowedConnections.Count > 0)
                         || (res == 2 && (!node.Value.roadTypes.Contains("primary_link") || !node.Value.roadTypes.Contains("trunk_link") || !node.Value.roadTypes.Contains("motorway_link")))
-                        ||  (res == 1 && node.Value.roadTypes.Count == 1))
+                        || (res == 1 && node.Value.roadTypes.Count == 1))
                     {
                         DisconnectionNode disconnectionNode = new DisconnectionNode();
                         disconnectionNode.Id = node.Value.Id;
@@ -202,7 +194,7 @@ namespace OSM_Connecitvity_Backend_Revised
         // This method traverses the road networks and searches for disconnections in the road networked formed by the specified classes in the parameter list
         public void generateDisconnectionsDataBFS(List<string> diconnectionsRoadClassifications, string fileName)
         {
-            //Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
+            Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
 
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
@@ -225,7 +217,7 @@ namespace OSM_Connecitvity_Backend_Revised
                     HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
 
                     currentLabel++;
-                    //checker.Add(currentLabel, new HashSet<int>());
+                    checker.Add(currentLabel, new HashSet<int>());
                     children = new Queue();
 
                     //initialize the parent with the current label
@@ -233,23 +225,70 @@ namespace OSM_Connecitvity_Backend_Revised
                     children.Enqueue(node.Value);
                     subtree.Add(node.Value);
 
+                    //To check if prev node in the tree is a from or via
+                    JunctionNode prevNode = null;
+
                     while (children.Count != 0)
                     {
                         JunctionNode currentNode = (JunctionNode)children.Dequeue();
+
+                        //Added in SUM
+                        //start
+                        //checks if prevNode and currentNode have common relations,
+                        //if yes then we proceed to check whether the prev-currentNode-Nodetobeadded will form a restriction
+                        bool checkRestrictions = false;
+                        if (currentNode.restrictions.Count > 0)
+                        {
+                            if (prevNode != null && prevNode.restrictions.Count > 0)
+                            {
+
+                                if (prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).Count() > 0)
+                                    checkRestrictions = true;
+                            }
+                        }
+                        //end
 
                         //look thru all the ways this particular node is present in
                         foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                         {
                             Way wayObject = WayHashMap.GetValueOrDefault(way);
+                            prevNode = currentNode;
 
                             //if the road classification matches
                             if (diconnectionsRoadClassifications.Contains(wayObject.roadClass))
                             {
                                 //get the label of the start node of that way
-                                int label = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label;
-
+                                JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
+                                //Added in SUM
+                                //start
+                                //if thenext node may form a restriction and prevNode does exist (prevNode-From, Currentnode-Via,NextNode-To
+                                //we dnt add the next node
+                                if (prevNode != null && checkRestrictions == true)
+                                {
+                                    List<string> commonStart = stNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonStart.Count() > 0)
+                                    {
+                                        foreach (string restr in commonStart)
+                                        {
+                                            //This will work because we consider MW as oneway
+                                            //Check for primary as LV1 too, now fiji has no relations with no
+                                            if (stNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            /*
+                                            else if (stNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            */
+                                            else checkRestrictions = false;
+                                        }
+                                    }
+                                }
+                                int label = stNode.label;
                                 //if its label doesnt match the current label
-                                if (label != currentLabel)
+                                if (label != currentLabel && checkRestrictions == false)
                                 {
                                     //if the node is already labeled
                                     if (label != 0)
@@ -262,8 +301,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
-                                        // Sikha: What is this checker doing?
-                                        //checker.GetValueOrDefault(label).Add(currentLabel);
+                                        checker.GetValueOrDefault(label).Add(currentLabel);
                                     }
                                     //else it means that this node is unlabeled and add it to the children queue
                                     else
@@ -276,11 +314,37 @@ namespace OSM_Connecitvity_Backend_Revised
 
                                 }
 
-                                //get the label of the end node of that way
-                                label = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label;
-                                //if its label doesnt match the current label
-                                if (label != currentLabel)
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id);
+                                if (prevNode != null && checkRestrictions == true)
                                 {
+
+                                    List<string> commonEnd = endNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonEnd.Count() > 0)
+                                    {
+                                        foreach (string restr in commonEnd)
+                                        {
+                                            //This will work because we consider MW as oneway 
+
+                                            if (endNode.restrictions[restr][1].Equals("to") && currentNode.restrictions[restr][1].Equals("via") && prevNode.restrictions[restr][1].Equals("from"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            /*
+                                            else if (endNode.restrictions[restr][1].Equals("from") && currentNode.restrictions[restr][1].Equals("via") && prevNode.restrictions[restr][1].Equals("to"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            */
+                                            else checkRestrictions = false;
+                                        }
+                                    }
+                                }
+                                //get the label of the end node of that way
+                                label = endNode.label;
+                                //if its label doesnt match the current label
+                                if (label != currentLabel && checkRestrictions == false)
+                                {
+                                    //end 
                                     //if the node is already labeled
                                     if (label != 0)
                                     {
@@ -355,7 +419,6 @@ namespace OSM_Connecitvity_Backend_Revised
 
         }
 
-
         // This method looks for disocnnections in the diconnectionsRoadClassifications road network, then runs an alogirthm
         // that will suggest a connectivity fix based on the least amount of nodes needed to connect them using the road classes
         // in allowedRoadClasses (it is currently set to do so for motorways, check the last line of the method to see why)
@@ -363,7 +426,7 @@ namespace OSM_Connecitvity_Backend_Revised
         //TODO: the big boi algoirhtm is not yet automated, but it works and the fix isnt difficult (
         public void suggestConnectivityFixBasedOnLeastAmountOfNodes(List<string> diconnectionsRoadClassifications, List<string> allowedRoadClasses, string fileName)
         {
-            //Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
+            Dictionary<int, HashSet<int>> checker = new Dictionary<int, HashSet<int>>();
 
             //dictionary having Key= label value and Value = set of subtree for that label
             Dictionary<int, HashSet<JunctionNode>> LabelToSubtrees = new Dictionary<int, HashSet<JunctionNode>>();
@@ -386,37 +449,79 @@ namespace OSM_Connecitvity_Backend_Revised
                     HashSet<JunctionNode> subtree = new HashSet<JunctionNode>();
 
                     currentLabel++;
-                    //checker.Add(currentLabel, new HashSet<int>());
+                    checker.Add(currentLabel, new HashSet<int>());
                     children = new Queue();
 
                     //initialize the parent with the current label
                     node.Value.label = currentLabel;
                     children.Enqueue(node.Value);
                     subtree.Add(node.Value);
-
+                    JunctionNode prevNode = null;
                     while (children.Count != 0)
                     {
                         JunctionNode currentNode = (JunctionNode)children.Dequeue();
+                        //Added in SUM
+                        //start
+                        //checks if prevNode and currentNode have common relations,
+                        //if yes then we proceed to check whether the prev-currentNode-Nodetobeadded will form a restriction
+                        bool checkRestrictions = false;
+                        if (currentNode.restrictions.Count > 0)
+                        {
+                            if (prevNode != null && prevNode.restrictions.Count > 0)
+                            {
+
+                                if (prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).Count() > 0)
+                                    checkRestrictions = true;
+                            }
+                        }
+                        //end
 
                         //look thru all the ways this particular node is present in
                         foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                         {
                             Way wayObject = WayHashMap.GetValueOrDefault(way);
+                            prevNode = currentNode;
 
                             //if the road classification matches
                             if (diconnectionsRoadClassifications.Contains(wayObject.roadClass))
                             {
                                 //get the label of the start node of that way
-                                int label = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label;
+                                JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
+                                //Added in SUM
+                                //start
+                                //if thenext node may form a restriction and prevNode does exist (prevNode-From, Currentnode-Via,NextNode-To
+                                //we dnt add the next node
+                                if (prevNode != null && checkRestrictions == true)
+                                {
+                                    List<string> commonStart = stNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonStart.Count() > 0)
+                                    {
+                                        foreach (string restr in commonStart)
+                                        {
+                                            //This will work because we consider MW as oneway
+                                            //Check for primary as LV1 too, now fiji has no relations with no
+                                            if (stNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            /*
+                                            else if (stNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            */
+                                            else checkRestrictions = false;
+                                        }
+                                    }
+                                }
+                                int label = stNode.label;
 
                                 //if its label doesnt match the current label
-                                if (label != currentLabel)
+                                if (label != currentLabel && checkRestrictions == false)
                                 {
                                     //if the node is already labeled
                                     if (label != 0)
                                     {
-                                        //Sikha
-                                        //Console.WriteLine("LabelToSubtree  " + LabelToSubtrees.GetValueOrDefault(label));
                                         //append the entire subtree of that label to that of the currentlabel and update their label to currentlabel
                                         foreach (JunctionNode junctionNode in LabelToSubtrees.GetValueOrDefault(label))
                                         {
@@ -425,23 +530,53 @@ namespace OSM_Connecitvity_Backend_Revised
                                         subtree.UnionWith(LabelToSubtrees.GetValueOrDefault(label));
                                         //flag that label
                                         LabelsToBeRemoved.Add(label);
-                                        //checker.GetValueOrDefault(label).Add(currentLabel);
+                                        checker.GetValueOrDefault(label).Add(currentLabel);
                                     }
                                     //else it means that this node is unlabeled and add it to the children queue
                                     else
                                     {
-                                        JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id).label = currentLabel;
-                                        children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
-                                        subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id));
+
+
+
+                                        stNode.label = currentLabel;
+                                        children.Enqueue(stNode);
+                                        subtree.Add(stNode);
+
+
 
                                     }
 
                                 }
 
                                 //get the label of the end node of that way
-                                label = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label;
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id);
+                                if (prevNode != null && checkRestrictions == true)
+                                {
+
+                                    List<string> commonEnd = endNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonEnd.Count() > 0)
+                                    {
+                                        foreach (string restr in commonEnd)
+                                        {
+                                            //This will work because we consider MW as oneway 
+
+                                            if (endNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            /*
+                                            else if (endNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                checkRestrictions = true;
+                                            }
+                                            */
+                                            else checkRestrictions = false;
+                                        }
+                                    }
+                                }
+                                label = endNode.label;
                                 //if its label doesnt match the current label
-                                if (label != currentLabel)
+                                if (label != currentLabel && checkRestrictions == false)
                                 {
                                     //if the node is already labeled
                                     if (label != 0)
@@ -458,9 +593,12 @@ namespace OSM_Connecitvity_Backend_Revised
                                     //else this node is unlabeled and add it to the children queue
                                     else
                                     {
-                                        JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id).label = currentLabel;
-                                        children.Enqueue(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
-                                        subtree.Add(JunctionNodeHashMap.GetValueOrDefault(wayObject.endNode.Id));
+
+
+                                        endNode.label = currentLabel;
+                                        children.Enqueue(endNode);
+                                        subtree.Add(endNode);
+
 
                                     }
                                 }
@@ -469,8 +607,6 @@ namespace OSM_Connecitvity_Backend_Revised
                     }
                     //add the subtree to the dictionary
                     LabelToSubtrees.Add(currentLabel, subtree);
-                    //Sikha
-                    //Console.WriteLine("LabelToSubtree  " + LabelToSubtrees.GetValueOrDefault(currentLabel));
                 }
             }
 
@@ -484,6 +620,8 @@ namespace OSM_Connecitvity_Backend_Revised
             // assessing the connectivity of a subgraph even though we defined subgraphs as having both motorway_link and motorway
             // ideally, it should not be hardcoded it should be the same as diconnectionsRoadClassifications
             connectSubGraphs(LabelToSubtrees, new List<string>() { "motorway" }, allowedRoadClasses, fileName);
+            //connectSubGraphs(LabelToSubtrees, new List<string>() { "primary" }, allowedRoadClasses, fileName);
+
 
 
         }
@@ -645,11 +783,46 @@ namespace OSM_Connecitvity_Backend_Revised
             Console.WriteLine("Succesfully created the file " + fileName);
         }
 
+        //method which takes a Junction nodes file as input and returns the network graph visualization file as output
+        public void getWaysFromNodes(string inputFileName, string visualizaitonFileName)
+        {
+            List<HashSet<string>> listOfSets = JsonConvert.DeserializeObject<List<HashSet<string>>>(File.ReadAllText(@inputFileName));
+            
+            HashSet<Way> ways = new HashSet<Way>();
+            foreach (HashSet<string> set in listOfSets)
+            {
+                if (set.Count < 2)
+                    continue;
 
+
+
+                
+                foreach (string node in set)
+                {
+                    JunctionNode jnode = JunctionNodeHashMap.GetValueOrDefault(node);
+                    foreach (KeyValuePair<string, string> way in jnode.wayToNodeMap)
+                    {
+                        if (set.Contains(way.Value))
+                            ways.Add(WayHashMap.GetValueOrDefault(way.Key));
+                    }
+
+
+
+                }
+                
+            }
+
+            File.WriteAllText(visualizaitonFileName, JsonConvert.SerializeObject(ways.ToList()));
+            Console.WriteLine("Succesfully created the file " + visualizaitonFileName);
+        }     
+
+        //Modified in SUM for turn restrictions
         //Here is where we run the BFS on the endpoint nodes of the graphs, return sorted list of shortest paths to closest subtrees 
         private List<List<JunctionNode>> BFSHelper(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses,HashSet<JunctionNode> sourceGraph, HashSet<JunctionNode> incomingEnpointNodes,List<int> subtreeLabels)
         {
             List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
+            //Maintain count of how many cases we have where a TO lies in incomingEndPoints, and the node to be added is a Via.
+            int count = 0;
 
             //traverse thru its hashset
             foreach (JunctionNode node in sourceGraph)
@@ -668,6 +841,21 @@ namespace OSM_Connecitvity_Backend_Revised
                     List<JunctionNode> path = (List<JunctionNode>)children.Dequeue();
                     JunctionNode currentNode = path.Last();
 
+                    bool checkRestrictions = false;
+                    JunctionNode prevNode = null;
+                    //We check if prevNode and currentNode have common relations, if yes, we need to check whether the node to be added will form a restriction
+                    if (currentNode.restrictions.Count > 0 && path.Count > 1)
+                    {
+                        prevNode = path.ElementAt(path.Count - 2);
+                        if (prevNode != null && prevNode.restrictions.Count > 0)
+                        {
+
+                            if (prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).Count() > 0)
+                                checkRestrictions = true;
+                        }
+
+                    }
+
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                     {
@@ -679,25 +867,86 @@ namespace OSM_Connecitvity_Backend_Revised
                             if (allowedPathRoadClasses.Contains(WayHashMap.GetValueOrDefault(way).roadClass))
                             {
                                 JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
-                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);                             
+                                JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);
+
+                                //We check whether the start or end node of the way being explored will form a restriction
+                                //We consider both beacuse of directions
+                                bool addStart = true;
+                                bool addEnd = true;
+                                if (prevNode != null && checkRestrictions == true)
+                                {
+                                    List<string> commonStart = startNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonStart.Count() > 0)
+                                    {
+                                        foreach (string restr in commonStart)
+                                        {
+                                            if (startNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                addStart = false;
+                                            }
+                                            /*else if (startNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                addStart = false;
+                                            }*/
+                                            else addStart = true;
+                                        }
+                                    }
+
+                                    List<string> commonEnd = endNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonEnd.Count() > 0)
+                                    {
+                                        foreach (string restr in commonEnd)
+                                        {
+                                            if (endNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                addEnd = false;
+                                            }
+                                            /*else if (endNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                addEnd = false;
+                                            }*/
+                                            else addEnd = true;
+                                        }
+                                    }
+
+                                }
 
                                 //if we are at a roundabout
-                                if(startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                if (startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id) && addStart == true)
                                 {
-                                    foreach(Node nd in WayHashMap.GetValueOrDefault(way).nodes)
+                                    foreach (Node nd in WayHashMap.GetValueOrDefault(way).nodes)
                                     {
                                         //if one of the middle nodes of the intersection is connected to another way
-                                        if(nd.ways.Count > 1)
+                                        if (nd.ways.Count > 1)
                                         {
                                             JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
-
+                                            // Should we consider the condition here
+                                            //it is possible that the junction node may form restrcition, currentnode-startnode-junctionNode.
+                                            List<string> commonJn = junctionNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys.Intersect(startNode.restrictions.Keys)).ToList();
+                                            bool addJn = true;
+                                            if (commonJn.Count() > 0)
+                                            {
+                                                foreach (string restr in commonJn)
+                                                {
+                                                    if (startNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from") && junctionNode.restrictions[restr].Equals("to"))
+                                                    {
+                                                        addJn = false;
+                                                    }
+                                                    else if (startNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                                    {
+                                                        addJn = false;
+                                                    }
+                                                    else addJn = true;
+                                                }
+                                            }
                                             //if we reach the first node of another subtree
                                             if (!subtreeLabels.Contains(junctionNode.label) && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 Console.WriteLine(path.Count);
                                                 path.Add(startNode);
 
-                                                path.Add(junctionNode);
+                                                if (addJn)
+                                                    path.Add(junctionNode);
                                                 //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
@@ -706,33 +955,49 @@ namespace OSM_Connecitvity_Backend_Revised
                                             List<JunctionNode> new_path = new List<JunctionNode>();
                                             new_path.AddRange(path);
                                             new_path.Add(startNode);
-                                            new_path.Add(junctionNode);
+                                            if (addJn)
+                                                new_path.Add(junctionNode);
                                             children.Enqueue(new_path);
-                                            
+
                                         }
                                     }
-                                    
+
                                 }
 
                                 //if we aren't at a roundabout
                                 else
                                 {
 
-                                    // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes )
-                                    if((!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no") && motorwayMotorwayLink.Contains(WayHashMap.GetValueOrDefault(way).roadClass)) || WayHashMap.GetValueOrDefault(way).oneWay.Equals("yes"))
+                                    // if we the way.oneway = yes or is null (we assume if oneWay = null that it means oneWay = yes for MW )
+                                    if ((!WayHashMap.GetValueOrDefault(way).oneWay.Equals("no") && motorwayMotorwayLink.Contains(WayHashMap.GetValueOrDefault(way).roadClass)) || WayHashMap.GetValueOrDefault(way).oneWay.Equals("yes"))
                                     {
                                         // if it is one way, then we do not traverse from endnode to startnode because it would violate the oneWay direction
-                                        if(currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
+                                        if (currentNode.Id.Equals(WayHashMap.GetValueOrDefault(way).endNode.Id))
                                         {
                                             continue;
                                         }
 
                                         // if the direction is respected (from startnode to endnode)
-                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id) && addEnd == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (!subtreeLabels.Contains(endNode.label) && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
+                                                //To check if incoming pt will become a restriction
+                                                List<string> commonGrE = endNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+                                                if (commonGrE.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGrE)
+                                                    {
+                                                        if (endNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
+
                                                 path.Add(endNode);
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
@@ -746,11 +1011,26 @@ namespace OSM_Connecitvity_Backend_Revised
                                     // if oneway = no
                                     else
                                     {
-                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id) && addStart == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (!subtreeLabels.Contains(startNode.label) && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
                                             {
+                                                //To check if incoming pt will become a restriction
+
+                                                List<string> commonGr = startNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+                                                if (commonGr.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGr)
+                                                    {
+                                                        if (startNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
                                                 path.Add(startNode);
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
@@ -761,12 +1041,27 @@ namespace OSM_Connecitvity_Backend_Revised
                                             children.Enqueue(new_path);
                                         }
 
-                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id) && addEnd == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (!subtreeLabels.Contains(endNode.label) && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
                                                 path.Add(endNode);
+                                                //To check if incoming pt will become a restriction
+
+                                                List<string> commonGrE = endNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+                                                if (commonGrE.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGrE)
+                                                    {
+                                                        if (endNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
@@ -775,23 +1070,25 @@ namespace OSM_Connecitvity_Backend_Revised
                                             new_path.Add(endNode);
                                             children.Enqueue(new_path);
                                         }
-                                    }        
+                                    }
                                 }
                             }
                         }
                     }
                     visitedNodes.Add(currentNode.Id);
                 }
-                end_of_while_loop: { }
+            end_of_while_loop: { }
             }
+            Console.WriteLine("Count is:" + count);
             return pathsOfSubtree.OrderBy(a => a.Count).ToList();
         }
 
+        //Modified in SUM for turn restrictions - similar logic as BFSHelper
         //Same as BFSHelper but we specify what subtree to hit, returns sorted list of shortest paths to target subtree
-        private List<List<JunctionNode>> BFSHelperWithTargetSubtree(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses, Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes, List<int> targetGraphLabels, int  subtreeLabel)
+        private List<List<JunctionNode>> BFSHelperWithTargetSubtree(List<string> subgraphRoadClasses, List<string> allowedPathRoadClasses, Dictionary<int, HashSet<JunctionNode>> LabelToOutgoingEndPoint, HashSet<JunctionNode> incomingEnpointNodes, List<int> targetGraphLabels, int subtreeLabel)
         {
             List<List<JunctionNode>> pathsOfSubtree = new List<List<JunctionNode>>();
-
+            int count = 0;
             //traverse thru its hashset
             foreach (JunctionNode node in LabelToOutgoingEndPoint.GetValueOrDefault(subtreeLabel))
             {
@@ -809,6 +1106,21 @@ namespace OSM_Connecitvity_Backend_Revised
                     List<JunctionNode> path = (List<JunctionNode>)children.Dequeue();
                     JunctionNode currentNode = path.Last();
 
+                    bool checkRestrictions = false;
+                    JunctionNode prevNode = null;
+
+                    if (currentNode.restrictions.Count > 0 && path.Count > 1)
+                    {
+                        prevNode = path.ElementAt(path.Count - 2);
+                        if (prevNode != null && prevNode.restrictions.Count > 0)
+                        {
+
+                            if (prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).Count() > 0)
+                                checkRestrictions = true;
+                        }
+
+                    }
+
                     //look thru all the ways this particular node is present in
                     foreach (string way in NodeDictionary.GetValueOrDefault(currentNode.Id).ways)
                     {
@@ -820,8 +1132,47 @@ namespace OSM_Connecitvity_Backend_Revised
                                 JunctionNode startNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).startNode.Id);
                                 JunctionNode endNode = JunctionNodeHashMap.GetValueOrDefault(WayHashMap.GetValueOrDefault(way).endNode.Id);
 
+                                bool addStart = true;
+                                bool addEnd = true;
+                                if (prevNode != null && checkRestrictions == true)
+                                {
+                                    List<string> commonStart = startNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonStart.Count() > 0)
+                                    {
+                                        foreach (string restr in commonStart)
+                                        {
+                                            if (startNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                addStart = false;
+                                            }
+                                            /*else if (startNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                addStart = false;
+                                            }*/
+                                            else addStart = true;
+                                        }
+                                    }
+
+                                    List<string> commonEnd = endNode.restrictions.Keys.Intersect(prevNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys)).ToList();
+                                    if (commonEnd.Count() > 0)
+                                    {
+                                        foreach (string restr in commonEnd)
+                                        {
+                                            if (endNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                            {
+                                                addEnd = false;
+                                            }
+                                            /*else if (endNode.restrictions[restr].Equals("from") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("to"))
+                                            {
+                                                addEnd = false;
+                                            }*/
+                                            else addEnd = true;
+                                        }
+                                    }
+
+                                }
                                 //if we are at a roundabout
-                                if (startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                if (startNode.Id.Equals(endNode.Id) && !visitedNodes.Contains(startNode.Id) && addStart == true)
                                 {
                                     foreach (Node nd in WayHashMap.GetValueOrDefault(way).nodes)
                                     {
@@ -829,20 +1180,40 @@ namespace OSM_Connecitvity_Backend_Revised
                                         if (nd.ways.Count > 1)
                                         {
                                             JunctionNode junctionNode = JunctionNodeHashMap.GetValueOrDefault(nd.Id);
-
+                                            // Should we consider the condition here
+                                            List<string> commonJn = junctionNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys.Intersect(startNode.restrictions.Keys)).ToList();
+                                            bool addJn = true;
+                                            if (commonJn.Count() > 0)
+                                            {
+                                                foreach (string restr in commonJn)
+                                                {
+                                                    if (startNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from") && junctionNode.restrictions[restr].Equals("to"))
+                                                    {
+                                                        addJn = false;
+                                                    }
+                                                    else if (startNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
+                                                    {
+                                                        addJn = false;
+                                                    }
+                                                    else addJn = true;
+                                                }
+                                            }
                                             //if we reach the first node of another subtree
                                             if (targetGraphLabels.Contains(junctionNode.label) && junctionNode.label != subtreeLabel && junctionNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(junctionNode))
                                             {
                                                 path.Add(startNode);
-                                                path.Add(junctionNode);
-                                               
+
+                                                if (addJn)
+                                                    path.Add(junctionNode);
+
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
                                             }
                                             List<JunctionNode> new_path = new List<JunctionNode>();
                                             new_path.AddRange(path);
                                             new_path.Add(startNode);
-                                            new_path.Add(junctionNode);
+                                            if (addJn)
+                                                new_path.Add(junctionNode);
                                             children.Enqueue(new_path);
 
                                         }
@@ -863,11 +1234,24 @@ namespace OSM_Connecitvity_Backend_Revised
                                         }
 
                                         // if the direction is respected (from startnode to endnode)
-                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id) && addEnd == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (targetGraphLabels.Contains(endNode.label) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
+                                                List<string> commonGrE = endNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+                                                if (commonGrE.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGrE)
+                                                    {
+                                                        if (endNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
                                                 path.Add(endNode);
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
@@ -881,11 +1265,24 @@ namespace OSM_Connecitvity_Backend_Revised
                                     // if oneway = no
                                     else
                                     {
-                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id))
+                                        if (!startNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(startNode.Id) && addStart == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (targetGraphLabels.Contains(startNode.label) && startNode.label != subtreeLabel && startNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(startNode))
                                             {
+                                                List<string> commonGr = startNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+                                                if (commonGr.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGr)
+                                                    {
+                                                        if (startNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
                                                 path.Add(startNode);
                                                 pathsOfSubtree.Add(path);
                                                 goto end_of_while_loop;
@@ -896,12 +1293,26 @@ namespace OSM_Connecitvity_Backend_Revised
                                             children.Enqueue(new_path);
                                         }
 
-                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id))
+                                        if (!endNode.Id.Equals(currentNode.Id) && !visitedNodes.Contains(endNode.Id) && addEnd == true)
                                         {
                                             //if we reach the first node of another subtree
                                             if (targetGraphLabels.Contains(endNode.label) && endNode.label != subtreeLabel && endNode.roadTypes.Intersect(subgraphRoadClasses).Any() && incomingEnpointNodes.Contains(endNode))
                                             {
                                                 Console.WriteLine(path.Count);
+                                                List<string> commonGrE = endNode.restrictions.Keys.Intersect(currentNode.restrictions.Keys).ToList();
+
+                                                if (commonGrE.Count() > 0)
+                                                {
+                                                    foreach (string restr in commonGrE)
+                                                    {
+                                                        if (endNode.restrictions[restr].Equals("via") && currentNode.restrictions[restr].Equals("from"))
+                                                        {
+                                                            count++;
+                                                            Console.WriteLine("The connecting node is a via point" + restr);
+                                                        }
+                                                        //else addStart = true;
+                                                    }
+                                                }
                                                 path.Add(endNode);
                                                 //File.WriteAllText("newpath.json", JsonConvert.SerializeObject(path.ToList()));
                                                 pathsOfSubtree.Add(path);
@@ -921,12 +1332,11 @@ namespace OSM_Connecitvity_Backend_Revised
                 }
             end_of_while_loop: { }
             }
+            Console.WriteLine("BFSHELPERTARGET Count is:" + count);
             return pathsOfSubtree.OrderBy(a => a.Count).ToList();
         }
 
-
-
-        // Tarjan modified algorithm to check strongly connected components
+        // Tarjans modified algorithm to check strongly connected components
         private List<List<string>> generateStronglyDisconnectedComponents(HashSet<JunctionNode> graph, List<string> graphRoadTypes)
         {
             GraphTarjan g = new GraphTarjan();
@@ -1039,40 +1449,5 @@ namespace OSM_Connecitvity_Backend_Revised
             File.WriteAllText(fileName, JsonConvert.SerializeObject(ways));
             Console.WriteLine("Succesfully created the file " + fileName);
         }
-
-        //method which takes a Junction nodes file as input and returns the network graph visualization file as output
-        public void getWaysFromNodes(string inputFileName, string visualizaitonFileName)
-        {
-            List<HashSet<string>> listOfSets = JsonConvert.DeserializeObject<List<HashSet<string>>>(File.ReadAllText(@inputFileName));
-
-            HashSet<Way> ways = new HashSet<Way>();
-            foreach (HashSet<string> set in listOfSets)
-            {
-                if (set.Count < 2)
-                    continue;
-
-
-
-
-                foreach (string node in set)
-                {
-                    JunctionNode jnode = JunctionNodeHashMap.GetValueOrDefault(node);
-                    foreach (KeyValuePair<string, string> way in jnode.wayToNodeMap)
-                    {
-                        // Sikha: debug to understand why set.contains
-                        if (set.Contains(way.Value))
-                            ways.Add(WayHashMap.GetValueOrDefault(way.Key));
-                    }
-
-
-
-                }
-
-            }
-
-            File.WriteAllText(visualizaitonFileName, JsonConvert.SerializeObject(ways.ToList()));
-            Console.WriteLine("Succesfully created the file " + visualizaitonFileName);
-        }
-
     }
 }
