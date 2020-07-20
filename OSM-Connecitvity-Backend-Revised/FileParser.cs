@@ -159,15 +159,15 @@ namespace OSM_Connecitvity_Backend_Revised
             //end
 
             // Create the way data file
-            File.WriteAllText("ways.json", JsonConvert.SerializeObject(wayDictionary));
+            File.WriteAllText("FJ_ways.json", JsonConvert.SerializeObject(wayDictionary));
             Console.WriteLine("Successfully created ways.json file");
 
             // Create the junctionNodes data file
-            File.WriteAllText("junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
+            File.WriteAllText("FJ_junctionNodes.json", JsonConvert.SerializeObject(junctionNodeDictionary));
             Console.WriteLine("Successfully created junctionNodes.json file");
 
             // Create the node data file
-            File.WriteAllText("NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
+            File.WriteAllText("FJ_NodeDictionary.json", JsonConvert.SerializeObject(NodeDictionary));
             Console.WriteLine("Successfully created NodeDictionary.json file");
 
             //Added in SUM
