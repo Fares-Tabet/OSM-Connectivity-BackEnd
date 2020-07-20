@@ -255,7 +255,7 @@ namespace OSM_Connecitvity_Backend_Revised
                             prevNode = currentNode;
 
                             //if the road classification matches
-                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass))
+                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass) || (wayObject.roadClass.StartsWith("AM"))
                             {
                                 //get the label of the start node of that way
                                 JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
@@ -325,7 +325,7 @@ namespace OSM_Connecitvity_Backend_Revised
                                         {
                                             //This will work because we consider MW as oneway 
 
-                                            if (endNode.restrictions[restr][1].Equals("to") && currentNode.restrictions[restr][1].Equals("via") && prevNode.restrictions[restr][1].Equals("from"))
+                                            if (endNode.restrictions[restr].Equals("to") && currentNode.restrictions[restr].Equals("via") && prevNode.restrictions[restr].Equals("from"))
                                             {
                                                 checkRestrictions = true;
                                             }
@@ -483,7 +483,7 @@ namespace OSM_Connecitvity_Backend_Revised
                             prevNode = currentNode;
 
                             //if the road classification matches
-                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass))
+                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass)|| (wayObject.roadClass.StartsWith("AM"))
                             {
                                 //get the label of the start node of that way
                                 JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
