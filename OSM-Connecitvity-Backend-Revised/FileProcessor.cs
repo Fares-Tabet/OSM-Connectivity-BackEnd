@@ -765,6 +765,11 @@ namespace OSM_Connecitvity_Backend_Revised
 
             //HashSet<JunctionNode>
             //currentGraph = JsonConvert.DeserializeObject<HashSet<JunctionNode>>(File.ReadAllText(@"currentgraph.json"));
+            /*HashSet<JunctionNode> sett = new HashSet<JunctionNode>() ;
+            foreach (int label in LabelToSubtrees.Keys)
+            {
+                sett = sett.Union(LabelToSubtrees.GetValueOrDefault(label)).ToHashSet();
+            }*/
             HashSet<JunctionNode> sett = LabelToSubtrees.GetValueOrDefault(5).ToHashSet();
             sett = sett.Union(LabelToSubtrees.GetValueOrDefault(2)).ToHashSet();
             sett = sett.Union(LabelToSubtrees.GetValueOrDefault(4)).ToHashSet();
@@ -774,6 +779,7 @@ namespace OSM_Connecitvity_Backend_Revised
             //sett = sett.Union(LabelToSubtrees.GetValueOrDefault(12)).ToHashSet();
             sett.RemoveWhere(x => (x.roadTypes.Contains("motorway_link") && !x.roadTypes.Contains("motorway")));
             sett = sett.Union(currentGraph).ToHashSet();
+		
             //File.WriteAllText("union.json", JsonConvert.SerializeObject(sett));
             List<List<string>> result = generateStronglyDisconnectedComponents(sett, allowedPathRoadClasses.Union(subgraphRoadClasses).ToList());
 
