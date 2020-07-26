@@ -255,7 +255,7 @@ namespace OSM_Connecitvity_Backend_Revised
                             prevNode = currentNode;
 
                             //if the road classification matches
-                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass) || (wayObject.roadClass.StartsWith("AM"))
+                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass) || (wayObject.roadClass.StartsWith("AM")))
                             {
                                 //get the label of the start node of that way
                                 JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
@@ -483,7 +483,7 @@ namespace OSM_Connecitvity_Backend_Revised
                             prevNode = currentNode;
 
                             //if the road classification matches
-                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass)|| (wayObject.roadClass.StartsWith("AM"))
+                            if (diconnectionsRoadClassifications.Contains(wayObject.roadClass)|| (wayObject.roadClass.StartsWith("AM")))
                             {
                                 //get the label of the start node of that way
                                 JunctionNode stNode = JunctionNodeHashMap.GetValueOrDefault(wayObject.startNode.Id);
